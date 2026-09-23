@@ -1,0 +1,14 @@
+[project]
+name = "wow-forever-faction-vote"
+version = "0.1.0"
+description = "Interactive faction voting simulator with era weighting and SQLite backing for WoW Forever"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "pydantic>=2.6.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

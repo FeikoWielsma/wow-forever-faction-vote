@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WoW Forever (Classic+) Faction Vote Simulator</title>
+<style>
+  :root {
+    --horde-red: #c0392b;
+    --horde-dark: #962d22;
+    --horde-bg: #fff5f5;
+    --horde-border: #fca5a5;
+    --alliance-blue: #2563eb;
+    --alliance-dark: #1d4ed8;
+    --alliance-bg: #eff6ff;
+    --alliance-border: #bfdbfe;
+    --abstain-gray: #64748b;
+    --abstain-bg: #f8fafc;
+    --abstain-border: #cbd5e1;
+    --gm-gold: #d97706;
+    --gm-bg: #fffbeb;
+    --gm-border: #fcd34d;
+    --border: #e2e8f0;
+    --card-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  header {
+    background: white;
+    padding: 20px 28px;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  h1 { font-size: 22px; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+  .subtitle { font-size: 13.5px; color: #64748b; margin-top: 2px; }
+
+  /* HEADER BUTTONS */
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: #0f172a; color: white; }
+  .btn-primary:hover { background: #1e293b; }
+  .btn-success { background: #10b981; color: white; }
+  .btn-success:hover { background: #059669; }
+  .btn-outline { background: white; border: 1px solid var(--border); color: #475569; }
+  .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+  .btn-gm { background: #d97706; color: white; }
+  .btn-gm:hover { background: #b45309; }
+
+  /* 4-CARD SCOREBOARD BANNER */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1.25fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 960px) {
+    .scoreboard { grid-template-columns: 1fr 1fr; }
+  }
+  .score-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    border-top: 5px solid #cbd5e1;
+    position: relative;
+    overflow: hidden;
+  }
+  .score-card.horde { border-color: var(--horde-red); background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%); }
+  .score-card.alliance { border-color: var(--alliance-blue); background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%); }
+  .score-card.abstain { border-color: var(--abstain-gray); background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); }
+  .score-card.winner { border-color: #10b981; background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%); }
+  
+  .card-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; }
+  .card-val { font-size: 38px; font-weight: 800; margin: 2px 0; line-height: 1.1; }
+  .score-card.horde .card-val { color: var(--horde-red); }
+  .score-card.alliance .card-val { color: var(--alliance-blue); }
+  .score-card.abstain .card-val { color: #475569; }
+  .score-card.winner .card-val { color: #059669; font-size: 24px; padding-top: 6px; }
+  .card-sub { font-size: 12.5px; color: #64748b; }
+  
+  .swing-alert {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .swing-alert.critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .swing-alert.safe { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+  .vote-mode-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  /* GM RIG-O-METER PANEL */
+  .gm-panel {
+    background: var(--gm-bg);
+    border: 2px solid var(--gm-border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+  }
+  .gm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .gm-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gm-tagline {
+    font-size: 13px;
+    color: #b45309;
+  }
+  .gm-body {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 860px) {
+    .gm-body { grid-template-columns: 1fr; }
+  }
+  .gm-stat-box {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid #fde68a;
+  }
+  .gm-stat-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #78350f;
+    margin-bottom: 6px;
+  }
+  .gm-stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.4;
+  }
+  .gm-actions-box {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid #fde68a;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .gm-buttons-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .rig-gauge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .rig-gauge.guaranteed { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+  .rig-gauge.possible { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  .rig-gauge.unlikely { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+  /* SIMULATION OUTPUT LOG */
+  #sim-log-box {
+    margin-top: 12px;
+    background: #0f172a;
+    color: #38bdf8;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: none;
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.5;
+  }
+
+  /* CONTROLS BAR */
+  .controls-panel {
+    background: white;
+    padding: 18px 24px;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+  }
+  .controls-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mode-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .mode-switch-btn {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #64748b;
+    background: transparent;
+  }
+  .mode-switch-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .weights-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    transition: opacity 0.2s ease;
+  }
+  .weights-section.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .weight-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .weight-label { font-weight: 600; font-size: 13px; color: #334155; }
+  .weight-input {
+    width: 50px;
+    padding: 5px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    color: #0f172a;
+    background: white;
+  }
+
+  /* SEARCH & PRESETS BAR */
+  .controls-row-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 14px;
+  }
+  .presets-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .preset-btn {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: #475569;
+  }
+  .preset-btn:hover { background: #e2e8f0; color: #0f172a; }
+  .preset-btn.active {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+  }
+
+  .search-filter-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .search-input {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 180px;
+  }
+  .filter-select {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: white;
+    color: #334155;
+  }
+
+  /* TABLE */
+  .table-container {
+    background: white;
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: #0f172a;
+    color: white;
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    user-select: none;
+  }
+  th.center, td.center { text-align: center; }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr.horde-row { background: #fffcfc; }
+  tr.horde-row:hover { background: #fee2e2; }
+  tr.alliance-row { background: #fbfdff; }
+  tr.alliance-row:hover { background: #dbeafe; }
+  tr.abstain-row { background: #f8fafc; }
+  tr.abstain-row:hover { background: #f1f5f9; }
+
+  /* FACTION TOGGLE DROPDOWN */
+  .faction-dropdown {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .faction-dropdown.horde {
+    background: #fee2e2;
+    color: var(--horde-red);
+    border-color: #fca5a5;
+  }
+  .faction-dropdown.alliance {
+    background: #dbeafe;
+    color: var(--alliance-blue);
+    border-color: #93c5fd;
+  }
+  .faction-dropdown.abstain {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #cbd5e1;
+  }
+
+  /* CHECKBOX STYLING */
+  input[type="checkbox"] {
+    width: 19px;
+    height: 19px;
+    cursor: pointer;
+    accent-color: #2563eb;
+    vertical-align: middle;
+  }
+  .player-score {
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .player-score.abstaining {
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+  .modal-card {
+    background: white;
+    padding: 28px 32px;
+    border-radius: 16px;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  }
+  .modal-icon { font-size: 48px; margin-bottom: 12px; }
+  .modal-title { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+  .modal-body { font-size: 14px; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+
+  /* TOAST ALERT */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>⚔️ WoW Forever (Classic+) Faction Decision Tool</h1>
+      <div class="subtitle">Live voting simulator: toggle faction per person, test GM poll closing strategy, switch between Weighted & 1-Vote modes.</div>
+    </div>
+    <div class="header-actions">
+      <div id="db-status-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #065f46;">
+        <span id="db-status-dot" style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+        <span id="db-status-text">Connecting to SQLite...</span>
+      </div>
+      <button class="btn btn-outline" onclick="resetToDefaults()">🔄 Reset Roster</button>
+      <button class="btn btn-success" onclick="copyTSV()">📋 Copy for Google Sheets</button>
+    </div>
+  </header>
+
+  <!-- 4-CARD SCOREBOARD -->
+  <div class="scoreboard">
+    <!-- Horde -->
+    <div class="score-card horde">
+      <div class="vote-mode-badge" id="badge-horde-mode">Weighted Mode</div>
+      <div class="card-label">Horde Active</div>
+      <div class="card-val" id="horde-score">0</div>
+      <div class="card-sub" id="horde-pct">0% of decided vote</div>
+    </div>
+
+    <!-- Alliance -->
+    <div class="score-card alliance">
+      <div class="vote-mode-badge" id="badge-alliance-mode">Weighted Mode</div>
+      <div class="card-label">Alliance Active</div>
+      <div class="card-val" id="alliance-score">0</div>
+      <div class="card-sub" id="alliance-pct">0% of decided vote</div>
+    </div>
+
+    <!-- Abstain / Undecided Voting Power -->
+    <div class="score-card abstain">
+      <div class="card-label">⚪ Abstain / Sitting Out</div>
+      <div class="card-val" id="abstain-score">0</div>
+      <div class="card-sub" id="abstain-sub">0 potential points</div>
+      <div id="abstain-swing-badge" class="swing-alert safe">No impact</div>
+    </div>
+
+    <!-- Projected Winner -->
+    <div class="score-card winner">
+      <div class="card-label">Projected Outcome</div>
+      <div class="card-val" id="winner-badge">Calculating...</div>
+      <div class="card-sub" id="margin-text">Lead margin</div>
+    </div>
+  </div>
+
+  <!-- GM CORRUPTION & POLL-CLOSING SIMULATOR -->
+  <div class="gm-panel">
+    <div class="gm-header">
+      <div>
+        <div class="gm-title">👑 GM Power Analysis: Can Sodam Rig the Vote?</div>
+        <div class="gm-tagline">Since Sodam chooses when to close the poll as GM ("supposedly random"), how much control does he have?</div>
+      </div>
+      <div id="rig-badge" class="rig-gauge guaranteed">100% RIGGABLE</div>
+    </div>
+
+    <div class="gm-body">
+      <!-- Rig Analysis Stats -->
+      <div class="gm-stat-box">
+        <div class="gm-stat-title">Mathematical Rigability Verdict</div>
+        <div class="gm-stat-value" id="gm-analysis-text">
+          Calculating GM leverage...
+        </div>
+        <div style="font-size: 12px; color: #78350f; margin-top: 8px;" id="gm-detail-math">
+          Sodam controls <strong>6 points</strong> (All 3 Eras) and a <strong>12 pt swing</strong>.
+        </div>
+      </div>
+
+      <!-- Interactive GM Controls -->
+      <div class="gm-actions-box">
+        <div>
+          <div class="gm-stat-title">Simulate GM Actions</div>
+          <div style="font-size: 12.5px; color: #475569; margin-bottom: 8px;">
+            Sodam's Desired Faction:
+            <select id="sodam-desired-faction" class="filter-select" style="padding: 3px 8px; font-size: 12px;" onchange="recalc()">
+              <option value="Alliance" selected>🔵 Alliance</option>
+              <option value="Horde">🔴 Horde</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="gm-buttons-row">
+          <button class="btn btn-gm" style="font-size: 12px; padding: 6px 12px;" onclick="closePollNow()">
+            🛑 "STOP THE COUNT!" (Close Poll Now)
+          </button>
+          <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="simulateRandomClose()">
+            🎲 Simulate "Random" Timing Window
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulation Output Log -->
+    <div id="sim-log-box"></div>
+  </div>
+
+  <!-- CONTROLS PANEL -->
+  <div class="controls-panel">
+    <!-- Top Row: Mode Switch & Weights -->
+    <div class="controls-row-top">
+      <div>
+        <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px;">
+          Voting System Mode:
+        </div>
+        <div class="mode-switch-container">
+          <button id="btn-mode-weighted" class="mode-switch-btn active" onclick="setVotingMode('weighted')">
+            ⚖️ Era-Weighted Mode
+          </button>
+          <button id="btn-mode-onevote" class="mode-switch-btn" onclick="setVotingMode('onevote')">
+            👤 1 Vote Per Person Mode
+          </button>
+        </div>
+      </div>
+
+      <div id="weights-container" class="weights-section">
+        <div class="weight-group">
+          <span class="weight-label">Classic:</span>
+          <input type="number" id="w-classic" class="weight-input" value="2" min="0" max="10" oninput="onWeightInput()">
+        </div>
+        <div class="weight-group">
+          <span class="weight-label">SoD:</span>
+          <input type="number" id="w-sod" class="weight-input" value="3" min="0" max="10" oninput="onWeightInput()">
+        </div>
+        <div class="weight-group">
+          <span class="weight-label">Retail:</span>
+          <input type="number" id="w-retail" class="weight-input" value="1" min="0" max="10" oninput="onWeightInput()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Presets & Filters -->
+    <div class="controls-row-bottom">
+      <div class="presets-bar" id="presets-bar">
+        <span style="font-size: 12px; font-weight: 700; color: #64748b; margin-right: 4px;">Presets:</span>
+        <button class="preset-btn active" onclick="applyPreset(2, 3, 1, this)">Classic+ Focus (2:3:1)</button>
+        <button class="preset-btn" onclick="applyPreset(3, 2, 1, this)">Seniority / Loyalty (3:2:1)</button>
+        <button class="preset-btn" onclick="applyPreset(1, 2, 3, this)">Recency / Current (1:2:3)</button>
+        <button class="preset-btn" onclick="applyPreset(1, 1, 1, this)">Flat (1:1:1)</button>
+        <button class="preset-btn" onclick="applyPreset(2, 2, 1, this)">Classic & SoD Equal (2:2:1)</button>
+      </div>
+
+      <div class="search-filter-box">
+        <input type="text" id="search-box" class="search-input" placeholder="🔍 Search player..." oninput="renderTable()">
+        <select id="filter-faction" class="filter-select" onchange="renderTable()">
+          <option value="all">All Factions</option>
+          <option value="Horde">Horde Only</option>
+          <option value="Alliance">Alliance Only</option>
+          <option value="Abstain">Abstain / Undecided</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Player Name</th>
+          <th style="width: 200px;">Faction Vote (Swap)</th>
+          <th class="center" style="width: 100px;">Classic</th>
+          <th class="center" style="width: 100px;">SoD</th>
+          <th class="center" style="width: 100px;">Retail</th>
+          <th class="center" style="width: 150px;" id="th-vote-val">Voting Power</th>
+        </tr>
+      </thead>
+      <tbody id="roster-tbody">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- POLL CLOSED POPUP MODAL -->
+<div id="poll-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-icon">📜</div>
+    <div class="modal-title">GM Sodam Has Closed the Poll!</div>
+    <div class="modal-body" id="modal-desc">
+      Official announcement has been posted in guild chat.
+    </div>
+    <button class="btn btn-primary" onclick="closeModal()">Dismiss Declaration</button>
+  </div>
+</div>
+
+<div id="toast">Copied to clipboard!</div>
+
+<script>
+const DEFAULT_PLAYERS = [
+  // Horde (20)
+  { id: 1, name: "rkkixlol", faction: "Horde", c: true, s: false, r: false },
+  { id: 2, name: "drey", faction: "Horde", c: true, s: true, r: true },
+  { id: 3, name: "korovaemae", faction: "Horde", c: false, s: false, r: false },
+  { id: 4, name: "xak", faction: "Horde", c: true, s: true, r: true },
+  { id: 5, name: "edd", faction: "Horde", c: true, s: true, r: true },
+  { id: 6, name: "bosse", faction: "Horde", c: false, s: true, r: false },
+  { id: 7, name: "bancai", faction: "Horde", c: true, s: true, r: false },
+  { id: 8, name: "raksodwarf", faction: "Horde", c: false, s: true, r: true },
+  { id: 9, name: "Erelja", faction: "Horde", c: false, s: true, r: true },
+  { id: 10, name: "sam", faction: "Horde", c: false, s: false, r: true },
+  { id: 11, name: "ayer", faction: "Horde", c: true, s: true, r: true },
+  { id: 12, name: "elstongnome", faction: "Horde", c: false, s: true, r: true },
+  { id: 13, name: "megadave", faction: "Horde", c: true, s: true, r: false },
+  { id: 14, name: "Maxibon", faction: "Horde", c: true, s: true, r: false },
+  { id: 15, name: "scam", faction: "Horde", c: true, s: true, r: true },
+  { id: 16, name: "wondo", faction: "Horde", c: true, s: false, r: true },
+  { id: 17, name: "fartlordx", faction: "Horde", c: true, s: true, r: true },
+  { id: 18, name: "Nexu / Deneve", faction: "Horde", c: true, s: true, r: false },
+  { id: 19, name: "Vanargand", faction: "Horde", c: true, s: false, r: true },
+  { id: 22, name: "brokest boi", faction: "Horde", c: true, s: true, r: true },
+
+  // Alliance (22)
+  { id: 20, name: "sodam", isSodam: true, faction: "Alliance", c: true, s: true, r: true },
+  { id: 21, name: "falkoro", faction: "Alliance", c: false, s: false, r: false },
+  { id: 23, name: "thistlewind", faction: "Alliance", c: false, s: true, r: true },
+  { id: 24, name: "neych", faction: "Alliance", c: false, s: true, r: true },
+  { id: 25, name: "grimzzy", faction: "Alliance", c: true, s: true, r: true },
+  { id: 26, name: "mcflash", faction: "Alliance", c: false, s: true, r: true },
+  { id: 27, name: "monarch", faction: "Alliance", c: true, s: true, r: false },
+  { id: 28, name: "bob", faction: "Alliance", c: false, s: true, r: true },
+  { id: 29, name: "Biolume", faction: "Alliance", c: false, s: true, r: false },
+  { id: 30, name: "purpleman", faction: "Alliance", c: true, s: true, r: true },
+  { id: 31, name: "yucca", faction: "Alliance", c: true, s: true, r: false },
+  { id: 32, name: "cloggy", faction: "Alliance", c: false, s: true, r: true },
+  { id: 33, name: "malc", faction: "Alliance", c: true, s: true, r: true },
+  { id: 34, name: "glen", faction: "Alliance", c: false, s: true, r: false },
+  { id: 35, name: "zerodas", faction: "Alliance", c: false, s: true, r: true },
+  { id: 36, name: "starfirebeam", faction: "Alliance", c: false, s: true, r: true },
+  { id: 37, name: "celth", faction: "Alliance", c: true, s: true, r: false },
+  { id: 38, name: "chobo", faction: "Alliance", c: false, s: false, r: false },
+  { id: 39, name: "port", faction: "Alliance", c: true, s: true, r: true },
+  { id: 40, name: "droggo", faction: "Alliance", c: true, s: true, r: false },
+  { id: 41, name: "atoz", faction: "Alliance", c: true, s: false, r: false },
+  { id: 42, name: "noxqs", faction: "Alliance", c: false, s: true, r: false }
+];
+
+let players = [];
+let votingMode = "weighted"; // 'weighted' or 'onevote'
+let isBackendConnected = false;
+let debounceSettingsTimeout = null;
+
+async function init() {
+  updateStatusBadge("Connecting to SQLite...", "connecting");
+  try {
+    const res = await fetch("/api/state");
+    if (res.ok) {
+      const data = await res.json();
+      players = data.players;
+      if (data.settings) {
+        if (data.settings.w_classic !== undefined) document.getElementById("w-classic").value = data.settings.w_classic;
+        if (data.settings.w_sod !== undefined) document.getElementById("w-sod").value = data.settings.w_sod;
+        if (data.settings.w_retail !== undefined) document.getElementById("w-retail").value = data.settings.w_retail;
+        if (data.settings.voting_mode) votingMode = data.settings.voting_mode;
+      }
+      isBackendConnected = true;
+      updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+      startPolling();
+    } else {
+      fallbackToDefaults();
+    }
+  } catch (err) {
+    fallbackToDefaults();
+  }
+  updateModeUI();
+  renderTable();
+  recalc();
+}
+
+function fallbackToDefaults() {
+  isBackendConnected = false;
+  updateStatusBadge("Offline / Standalone Mode", "offline");
+  players = JSON.parse(JSON.stringify(DEFAULT_PLAYERS));
+}
+
+function updateStatusBadge(text, state) {
+  const badge = document.getElementById("db-status-badge");
+  const dot = document.getElementById("db-status-dot");
+  const label = document.getElementById("db-status-text");
+  if (!badge || !dot || !label) return;
+  label.textContent = text;
+  if (state === "connected") {
+    badge.style.background = "#ecfdf5";
+    badge.style.borderColor = "#a7f3d0";
+    badge.style.color = "#065f46";
+    dot.style.background = "#10b981";
+  } else if (state === "saving") {
+    badge.style.background = "#eff6ff";
+    badge.style.borderColor = "#bfdbfe";
+    badge.style.color = "#1e40af";
+    dot.style.background = "#3b82f6";
+  } else if (state === "connecting") {
+    badge.style.background = "#fefce8";
+    badge.style.borderColor = "#fef08a";
+    badge.style.color = "#854d0e";
+    dot.style.background = "#eab308";
+  } else {
+    badge.style.background = "#fef2f2";
+    badge.style.borderColor = "#fecaca";
+    badge.style.color = "#991b1b";
+    dot.style.background = "#ef4444";
+  }
+}
+
+async function setVotingMode(mode) {
+  votingMode = mode;
+  updateModeUI();
+  renderTable();
+  recalc();
+  syncSettingsToDb({ voting_mode: mode });
+}
+
+function updateModeUI() {
+  const isOneVote = votingMode === "onevote";
+  document.getElementById("btn-mode-weighted").className = `mode-switch-btn ${!isOneVote ? 'active' : ''}`;
+  document.getElementById("btn-mode-onevote").className = `mode-switch-btn ${isOneVote ? 'active' : ''}`;
+  
+  const wSection = document.getElementById("weights-container");
+  const presetsBar = document.getElementById("presets-bar");
+  if (isOneVote) {
+    wSection.classList.add("disabled");
+    presetsBar.style.opacity = "0.35";
+    presetsBar.style.pointerEvents = "none";
+    document.getElementById("badge-horde-mode").textContent = "1-Vote Mode";
+    document.getElementById("badge-alliance-mode").textContent = "1-Vote Mode";
+    document.getElementById("th-vote-val").textContent = "Voting Power (1v)";
+  } else {
+    wSection.classList.remove("disabled");
+    presetsBar.style.opacity = "1";
+    presetsBar.style.pointerEvents = "auto";
+    document.getElementById("badge-horde-mode").textContent = "Weighted Mode";
+    document.getElementById("badge-alliance-mode").textContent = "Weighted Mode";
+    document.getElementById("th-vote-val").textContent = "Weighted Score";
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById("roster-tbody");
+  tbody.innerHTML = "";
+
+  const query = (document.getElementById("search-box").value || "").toLowerCase();
+  const filterFaction = document.getElementById("filter-faction").value;
+
+  const filtered = players.filter(p => {
+    const matchName = p.name.toLowerCase().includes(query);
+    const matchFac = filterFaction === "all" || p.faction === filterFaction;
+    return matchName && matchFac;
+  });
+
+  filtered.forEach((p, idx) => {
+    const tr = document.createElement("tr");
+    tr.className = p.faction === "Horde" ? "horde-row" : (p.faction === "Alliance" ? "alliance-row" : "abstain-row");
+
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td style="font-weight: 700; color: #0f172a;">
+        ${p.name} ${p.isSodam ? '<span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 800;">👑 GM</span>' : ''}
+      </td>
+      <td>
+        <select class="faction-dropdown ${p.faction.toLowerCase()}" onchange="changeFaction(${p.id}, this.value)">
+          <option value="Horde" ${p.faction === 'Horde' ? 'selected' : ''}>🔴 Horde</option>
+          <option value="Alliance" ${p.faction === 'Alliance' ? 'selected' : ''}>🔵 Alliance</option>
+          <option value="Abstain" ${p.faction === 'Abstain' ? 'selected' : ''}>⚪ Abstain</option>
+        </select>
+      </td>
+      <td class="center"><input type="checkbox" ${p.c ? 'checked' : ''} onchange="toggleBox(${p.id}, 'c', this.checked)"></td>
+      <td class="center"><input type="checkbox" ${p.s ? 'checked' : ''} onchange="toggleBox(${p.id}, 's', this.checked)"></td>
+      <td class="center"><input type="checkbox" ${p.r ? 'checked' : ''} onchange="toggleBox(${p.id}, 'r', this.checked)"></td>
+      <td class="center player-score ${p.faction === 'Abstain' ? 'abstaining' : ''}" id="score_${p.id}">0</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function changeFaction(id, newFaction) {
+  const p = players.find(x => x.id === id);
+  if (p) {
+    p.faction = newFaction;
+    renderTable();
+    recalc();
+    syncPlayerToDb(id, { faction: newFaction });
+  }
+}
+
+async function toggleBox(id, era, isChecked) {
+  const p = players.find(x => x.id === id);
+  if (p) {
+    p[era] = isChecked;
+    recalc();
+    syncPlayerToDb(id, { [era]: isChecked });
+  }
+}
+
+async function syncPlayerToDb(id, patchData) {
+  if (!isBackendConnected) return;
+  updateStatusBadge("Saving to SQLite...", "saving");
+  try {
+    await fetch(`/api/players/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patchData)
+    });
+    updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+  } catch (err) {
+    console.error("Failed to sync player to DB:", err);
+    updateStatusBadge("Sync Error", "offline");
+  }
+}
+
+async function applyPreset(wc, ws, wr, btn) {
+  if (votingMode === "onevote") setVotingMode("weighted");
+  document.getElementById("w-classic").value = wc;
+  document.getElementById("w-sod").value = ws;
+  document.getElementById("w-retail").value = wr;
+  document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  recalc();
+  syncSettingsToDb({ w_classic: wc, w_sod: ws, w_retail: wr, voting_mode: votingMode });
+}
+
+function onWeightInput() {
+  recalc();
+  if (debounceSettingsTimeout) clearTimeout(debounceSettingsTimeout);
+  debounceSettingsTimeout = setTimeout(() => {
+    const wc = parseFloat(document.getElementById("w-classic").value) || 0;
+    const ws = parseFloat(document.getElementById("w-sod").value) || 0;
+    const wr = parseFloat(document.getElementById("w-retail").value) || 0;
+    syncSettingsToDb({ w_classic: wc, w_sod: ws, w_retail: wr, voting_mode: votingMode });
+  }, 400);
+}
+
+async function syncSettingsToDb(settingsObj) {
+  if (!isBackendConnected) return;
+  updateStatusBadge("Saving settings...", "saving");
+  try {
+    await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settingsObj)
+    });
+    updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+  } catch (err) {
+    console.error("Failed to sync settings to DB:", err);
+  }
+}
+
+let pollTimer = null;
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (document.hidden || document.activeElement === document.getElementById("search-box")) return;
+    try {
+      const res = await fetch("/api/state");
+      if (res.ok) {
+        const data = await res.json();
+        const incomingJson = JSON.stringify(data.players);
+        const currentJson = JSON.stringify(players);
+        if (incomingJson !== currentJson) {
+          players = data.players;
+          renderTable();
+          recalc();
+        }
+      }
+    } catch (e) {
+      // silently ignore transient offline
+    }
+  }, 3000);
+}
+
+function recalc() {
+  const wc = parseFloat(document.getElementById("w-classic").value) || 0;
+  const ws = parseFloat(document.getElementById("w-sod").value) || 0;
+  const wr = parseFloat(document.getElementById("w-retail").value) || 0;
+  const isOneVote = votingMode === "onevote";
+
+  let hordeTotal = 0;
+  let allianceTotal = 0;
+  let abstainTotal = 0;
+
+  let hordeCount = 0;
+  let allianceCount = 0;
+  let abstainCount = 0;
+
+  const sodamPlayer = players.find(p => p.isSodam);
+  let sodamPower = 0;
+
+  players.forEach(p => {
+    let power = 0;
+    const hasPlayedAny = p.c || p.s || p.r;
+
+    if (isOneVote) {
+      power = hasPlayedAny ? 1 : 0;
+    } else {
+      power = (p.c ? wc : 0) + (p.s ? ws : 0) + (p.r ? wr : 0);
+    }
+
+    if (p.isSodam) sodamPower = power;
+
+    const scoreEl = document.getElementById(`score_${p.id}`);
+    if (scoreEl) {
+      if (p.faction === "Abstain") {
+        scoreEl.textContent = `${power} (idle)`;
+        scoreEl.className = "center player-score abstaining";
+      } else {
+        scoreEl.textContent = power;
+        scoreEl.className = "center player-score";
+      }
+    }
+
+    if (p.faction === "Horde") {
+      hordeTotal += power;
+      if (power > 0) hordeCount++;
+    } else if (p.faction === "Alliance") {
+      allianceTotal += power;
+      if (power > 0) allianceCount++;
+    } else if (p.faction === "Abstain") {
+      abstainTotal += power;
+      if (power > 0) abstainCount++;
+    }
+  });
+
+  const decidedTotal = hordeTotal + allianceTotal;
+  const grandTotal = decidedTotal + abstainTotal;
+
+  const hPct = decidedTotal > 0 ? ((hordeTotal / decidedTotal) * 100).toFixed(1) : 0;
+  const aPct = decidedTotal > 0 ? ((allianceTotal / decidedTotal) * 100).toFixed(1) : 0;
+  const absPct = grandTotal > 0 ? ((abstainTotal / grandTotal) * 100).toFixed(1) : 0;
+
+  document.getElementById("horde-score").textContent = hordeTotal;
+  document.getElementById("horde-pct").textContent = isOneVote 
+    ? `${hordeCount} active voters (${hPct}%)` 
+    : `${hPct}% of decided votes`;
+
+  document.getElementById("alliance-score").textContent = allianceTotal;
+  document.getElementById("alliance-pct").textContent = isOneVote 
+    ? `${allianceCount} active voters (${aPct}%)` 
+    : `${aPct}% of decided votes`;
+
+  document.getElementById("abstain-score").textContent = abstainTotal;
+  document.getElementById("abstain-sub").textContent = isOneVote
+    ? `${abstainCount} abstaining players (${absPct}% of total)`
+    : `${absPct}% of total pool (${abstainCount} players)`;
+
+  const margin = Math.abs(hordeTotal - allianceTotal);
+  const swingBadge = document.getElementById("abstain-swing-badge");
+
+  if (abstainTotal > margin && margin > 0) {
+    swingBadge.className = "swing-alert critical";
+    swingBadge.textContent = `⚠️ Could Flip Vote (${abstainTotal} > ${margin} lead)`;
+  } else if (margin === 0 && abstainTotal > 0) {
+    swingBadge.className = "swing-alert critical";
+    swingBadge.textContent = `⚠️ Tiebreaker Potential (${abstainTotal} pts)`;
+  } else {
+    swingBadge.className = "swing-alert safe";
+    swingBadge.textContent = abstainTotal === 0 ? "0 abstaining" : `✓ Lead holds (${margin} > ${abstainTotal})`;
+  }
+
+  const winnerEl = document.getElementById("winner-badge");
+  const marginEl = document.getElementById("margin-text");
+
+  let currentLeader = "Tie";
+  if (hordeTotal > allianceTotal) {
+    currentLeader = "Horde";
+    winnerEl.textContent = "HORDE WINS";
+    winnerEl.style.color = "var(--horde-red)";
+    marginEl.textContent = `Horde leads by +${margin} ${isOneVote ? 'votes' : 'pts'} (+${(hPct - aPct).toFixed(1)}%)`;
+  } else if (allianceTotal > hordeTotal) {
+    currentLeader = "Alliance";
+    winnerEl.textContent = "ALLIANCE WINS";
+    winnerEl.style.color = "var(--alliance-blue)";
+    marginEl.textContent = `Alliance leads by +${margin} ${isOneVote ? 'votes' : 'pts'} (+${(aPct - hPct).toFixed(1)}%)`;
+  } else {
+    winnerEl.textContent = "DEAD TIE";
+    winnerEl.style.color = "#d97706";
+    marginEl.textContent = "Active votes are completely tied";
+  }
+
+  // UPDATE GM RIG-O-METER ANALYSIS
+  const desiredFaction = document.getElementById("sodam-desired-faction").value;
+  const rigBadge = document.getElementById("rig-badge");
+  const gmAnalysis = document.getElementById("gm-analysis-text");
+  const gmMath = document.getElementById("gm-detail-math");
+
+  const sodamSwing = isOneVote ? 2 : (sodamPower * 2);
+  const sodamCurrentFaction = sodamPlayer ? sodamPlayer.faction : "Unknown";
+
+  let canRigNow = false;
+  let rigReason = "";
+
+  if (currentLeader === desiredFaction && margin > 0) {
+    canRigNow = true;
+    rigBadge.className = "rig-gauge guaranteed";
+    rigBadge.textContent = "🎯 100% RIGGABLE RIGHT NOW";
+    rigReason = `<strong>YES! ${desiredFaction} is already ahead (+${margin} ${isOneVote?'votes':'pts'}).</strong> Sodam can simply close the poll right now ("stopping time" tactic) and declare victory without changing anything!`;
+  } else {
+    // If desired faction is behind or tied, can Sodam's own vote flip it?
+    let potentialMarginAfterSodamFlip = 0;
+    if (sodamCurrentFaction !== desiredFaction) {
+      // Sodam can switch from opponent/abstain to desired!
+      potentialMarginAfterSodamFlip = sodamPower - margin;
+    }
+
+    if (potentialMarginAfterSodamFlip > 0) {
+      canRigNow = true;
+      rigBadge.className = "rig-gauge guaranteed";
+      rigBadge.textContent = "🎯 RIGGABLE VIA VOTE SWAP";
+      rigReason = `<strong>YES! Sodam's personal swing is ${sodamSwing} ${isOneVote?'votes':'pts'}.</strong> If Sodam switches his vote to ${desiredFaction} right now and calls "Poll closed!", ${desiredFaction} wins by +${potentialMarginAfterSodamFlip} ${isOneVote?'votes':'pts'}!`;
+    } else {
+      rigBadge.className = "rig-gauge possible";
+      rigBadge.textContent = "🎲 RIGGABLE VIA TIMING WINDOW";
+      rigReason = `<strong>${desiredFaction} is behind by ${margin} ${isOneVote?'votes':'pts'}.</strong> Because members are constantly swapping, Sodam just needs to wait for a 1-2 voter fluctuation where ${desiredFaction} spikes ahead, then immediately slam the poll closed!`;
+    }
+  }
+
+  gmAnalysis.innerHTML = rigReason;
+  const unitLabel = isOneVote ? "vote" : "points";
+  const swingUnit = isOneVote ? "votes" : "pts";
+  const breakdownStr = isOneVote ? "1 voter" : `Classic: ${wc}, SoD: ${ws}, Retail: ${wr}`;
+  gmMath.innerHTML = `Sodam controls <strong>${sodamPower} ${unitLabel}</strong> (${breakdownStr}) with a swing of <strong>${sodamSwing} ${swingUnit}</strong>. Combined with "Optional Stopping" (closing at a peak), the GM has near-total control over the outcome.`;
+}
+
+function closePollNow() {
+  const winnerText = document.getElementById("winner-badge").textContent;
+  const marginText = document.getElementById("margin-text").textContent;
+  const modal = document.getElementById("poll-modal");
+  const modalDesc = document.getElementById("modal-desc");
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  modalDesc.innerHTML = `
+    <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+      ${winnerText}!
+    </div>
+    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 12px;">
+      ${marginText}
+    </div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 12px; color: #334155; text-align: left;">
+      👑 <strong>Official GM Announcement:</strong><br>
+      <em>"Alright guys, time is up! Poll is officially closed as of <strong>${timeStr}</strong>. The result has been tallied and locked in for WoW Forever!"</em><br>
+      <span style="font-size: 11px; color: #94a3b8;">(Purely random closing time, trust me bro 😉)</span>
+    </div>
+  `;
+  modal.style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("poll-modal").style.display = "none";
+}
+
+function simulateRandomClose() {
+  const logBox = document.getElementById("sim-log-box");
+  logBox.style.display = "block";
+  logBox.innerHTML = "⏳ Running Monte Carlo simulation of 25 timeline steps with fluctuating voter swaps...\n";
+
+  const desiredFaction = document.getElementById("sodam-desired-faction").value;
+  const isOneVote = votingMode === "onevote";
+
+  let steps = 0;
+  let caughtWindow = false;
+  let simMargin = (desiredFaction === "Alliance" ? 1 : -1) * (parseInt(document.getElementById("alliance-score").textContent) - parseInt(document.getElementById("horde-score").textContent));
+
+  const interval = setInterval(() => {
+    steps++;
+    // Simulate random swing between -3 and +3
+    const swing = Math.floor(Math.random() * 7) - 3;
+    simMargin += swing;
+
+    const timeLabel = `T+${steps * 45}m`;
+    if (simMargin > 0 && !caughtWindow) {
+      caughtWindow = true;
+      logBox.innerHTML += `► [${timeLabel}] Fluctuation: ${desiredFaction} hits +${simMargin} ${isOneVote?'votes':'pts'}! 🎯 SODAM CALLS: "POLL CLOSED!"\n`;
+      logBox.innerHTML += `=======================================================\n`;
+      logBox.innerHTML += `✅ VERDICT: Sodam successfully rigged the vote for ${desiredFaction} at Step ${steps}!\n`;
+      logBox.scrollTop = logBox.scrollHeight;
+      clearInterval(interval);
+      return;
+    } else {
+      logBox.innerHTML += `► [${timeLabel}] Swap event: ${desiredFaction} margin at ${simMargin >= 0 ? '+' : ''}${simMargin}...\n`;
+    }
+
+    logBox.scrollTop = logBox.scrollHeight;
+
+    if (steps >= 12) {
+      clearInterval(interval);
+      if (!caughtWindow) {
+        logBox.innerHTML += `► [T+9h] Sodam switches his own vote (+12 swing) and hits CLOSE! ${desiredFaction} wins!\n`;
+      }
+    }
+  }, 200);
+}
+
+async function resetToDefaults() {
+  if (confirm("Reset all player votes, checkboxes, and weights to canonical defaults in SQLite?")) {
+    updateStatusBadge("Resetting DB...", "saving");
+    try {
+      if (isBackendConnected) {
+        await fetch("/api/reset", { method: "POST" });
+        const res = await fetch("/api/state");
+        const data = await res.json();
+        players = data.players;
+      } else {
+        players = JSON.parse(JSON.stringify(DEFAULT_PLAYERS));
+      }
+    } catch (err) {
+      players = JSON.parse(JSON.stringify(DEFAULT_PLAYERS));
+    }
+    votingMode = "weighted";
+    document.getElementById("w-classic").value = 2;
+    document.getElementById("w-sod").value = 3;
+    document.getElementById("w-retail").value = 1;
+    document.getElementById("search-box").value = "";
+    document.getElementById("filter-faction").value = "all";
+    document.getElementById("sim-log-box").style.display = "none";
+    updateModeUI();
+    renderTable();
+    recalc();
+    if (isBackendConnected) {
+      updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+    }
+    showToast("Roster reset to canonical defaults in SQLite!");
+  }
+}
+
+function copyTSV() {
+  let tsv = "Player Name\tFaction Vote\tClassic\tSoD\tRetail\n";
+  players.forEach(p => {
+    tsv += `${p.name}\t${p.faction}\t${p.c ? 'TRUE' : 'FALSE'}\t${p.s ? 'TRUE' : 'FALSE'}\t${p.r ? 'TRUE' : 'FALSE'}\n`;
+  });
+  navigator.clipboard.writeText(tsv).then(() => {
+    showToast("Copied 42 players to clipboard! Paste directly into Google Sheets.");
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 3000);
+}
+
+init();
+</script>
+
+</body>
+</html>

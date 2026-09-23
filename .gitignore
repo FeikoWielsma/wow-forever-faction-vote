@@ -1,0 +1,19 @@
+# SQLite Database & WAL logs
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
