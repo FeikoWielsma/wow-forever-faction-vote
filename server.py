@@ -387,6 +387,136 @@ def reset_database():
     raise HTTPException(status_code=403, detail="Reset roster has been permanently disabled.")
 
 
+DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
+DISCORD_API = "https://discord.com/api/v10"
+DEFAULT_GUILD_ID = os.environ.get("DISCORD_GUILD_ID", "1172965723467956365")
+DEFAULT_CHANNEL_ID = os.environ.get("DISCORD_CHANNEL_ID", "1548578917965635675")
+DEFAULT_MESSAGE_ID = os.environ.get("DISCORD_MESSAGE_ID", "1548585777326329887")
+
+
+def normalize_name(s: str) -> str:
+    return s.lower().replace(" ", "").replace("_", "").replace(".", "").replace("/", "").strip()
+
+
+@app.post("/api/discord/sync")
+def sync_discord_votes():
+    import urllib.request
+    import urllib.parse
+    import json
+
+    bot_token = os.environ.get("DISCORD_BOT_TOKEN", DISCORD_BOT_TOKEN)
+    if not bot_token:
+        raise HTTPException(status_code=500, detail="DISCORD_BOT_TOKEN environment variable not set")
+
+    c_id = DEFAULT_CHANNEL_ID
+    m_id = DEFAULT_MESSAGE_ID
+    g_id = DEFAULT_GUILD_ID
+
+    headers = {
+        "Authorization": f"Bot {bot_token}",
+        "User-Agent": "WoWFactionVoteBot (https://wow-faction-vote, 1.0)",
+    }
+
+    def discord_fetch(endpoint: str):
+        url = f"{DISCORD_API}{endpoint}"
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            print(f"Discord API error {endpoint}: {e}")
+            return None
+
+    # Fetch users who reacted Alliance and Horde
+    ally_users = discord_fetch(f"/channels/{c_id}/messages/{m_id}/reactions/{urllib.parse.quote('Alliance:965755044932763719')}?limit=100") or []
+    horde_users = discord_fetch(f"/channels/{c_id}/messages/{m_id}/reactions/{urllib.parse.quote('Horde:965755045087948830')}?limit=100") or []
+
+    user_votes = {}
+    for u in ally_users:
+        uid = u["id"]
+        if uid not in user_votes:
+            user_votes[uid] = {"voted_ally": False, "voted_horde": False, "u": u}
+        user_votes[uid]["voted_ally"] = True
+
+    for u in horde_users:
+        uid = u["id"]
+        if uid not in user_votes:
+            user_votes[uid] = {"voted_ally": False, "voted_horde": False, "u": u}
+        user_votes[uid]["voted_horde"] = True
+
+    # Fetch member nicknames
+    for uid, d in user_votes.items():
+        m_info = discord_fetch(f"/guilds/{g_id}/members/{uid}")
+        d["nick"] = m_info.get("nick") if m_info else None
+
+    conn = get_db()
+    updated = []
+    unmatched = []
+
+    with conn:
+        all_players = conn.execute("SELECT id, name, faction FROM players").fetchall()
+
+        for uid, d in user_votes.items():
+            u = d["u"]
+            nick = d["nick"]
+            uname = u.get("username")
+            gname = u.get("global_name")
+
+            if d["voted_ally"] and d["voted_horde"]:
+                vote_faction = "Abstain"  # Contested / Both
+            elif d["voted_ally"]:
+                vote_faction = "Alliance"
+            elif d["voted_horde"]:
+                vote_faction = "Horde"
+            else:
+                continue
+
+            candidates = [c for c in [nick, gname, uname] if c]
+            matched_player = None
+
+            for p in all_players:
+                norm_p = normalize_name(p["name"])
+                for c in candidates:
+                    norm_c = normalize_name(c)
+                    if norm_p == norm_c or norm_p in norm_c or norm_c in norm_p:
+                        matched_player = p
+                        break
+                    if ("xak" in norm_p and "agravain" in norm_c) or ("agravain" in norm_p and "xak" in norm_c):
+                        matched_player = p
+                        break
+                if matched_player:
+                    break
+
+            if matched_player:
+                conn.execute(
+                    "UPDATE players SET faction = ? WHERE id = ?",
+                    (vote_faction, matched_player["id"]),
+                )
+                updated.append({
+                    "id": matched_player["id"],
+                    "name": matched_player["name"],
+                    "faction": vote_faction,
+                    "discord_nick": nick or uname,
+                })
+            else:
+                unmatched.append({
+                    "discord_id": uid,
+                    "name": nick or gname or uname,
+                    "faction": vote_faction,
+                })
+
+    sync_to_gcs()
+
+    return {
+        "status": "ok",
+        "synced_count": len(updated),
+        "updated": updated,
+        "unmatched": unmatched,
+        "total_alliance_reactions": len(ally_users),
+        "total_horde_reactions": len(horde_users),
+    }
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     host = os.environ.get("HOST", "127.0.0.1")

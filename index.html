@@ -1290,6 +1290,7 @@
       <span class="admin-desc">You are on the management URL. You can edit names, add/remove members, toggle eras, and move factions.</span>
     </div>
     <div class="admin-bar-actions">
+      <button class="btn btn-primary" id="btn-discord-sync" style="font-size: 12px; padding: 6px 12px; background: #5865F2; border-color: #5865F2;" onclick="syncDiscordVotes()" title="Fetch latest votes from Discord message in #sign-up-forever">🤖 Sync Discord Poll</button>
       <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="copyPublicLink()">📋 Copy Public Safe Link</button>
       <a href="/" target="_blank" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">👁️ Open Safe View</a>
     </div>
@@ -2860,6 +2861,39 @@ function showToast(msg) {
   t.textContent = msg;
   t.style.display = "block";
   setTimeout(() => { t.style.display = "none"; }, 3000);
+}
+
+async function syncDiscordVotes() {
+  const btn = document.getElementById("btn-discord-sync");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Syncing...";
+  }
+  showToast("Fetching live votes from Discord message in #sign-up-forever...");
+  try {
+    const res = await fetch("/api/discord/sync", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`✅ Synced ${data.synced_count} Discord voters (${data.total_alliance_reactions} Alliance, ${data.total_horde_reactions} Horde)!`);
+      const stateRes = await fetch("/api/state");
+      if (stateRes.ok) {
+        const sdata = await stateRes.json();
+        players = sdata.players;
+        renderTable();
+        recalc();
+      }
+    } else {
+      showToast("❌ Failed to sync from Discord.");
+    }
+  } catch (err) {
+    console.error("Discord sync error:", err);
+    showToast("❌ Discord sync connection error.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🤖 Sync Discord Poll";
+    }
+  }
 }
 
 init();
