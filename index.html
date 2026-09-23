@@ -306,6 +306,55 @@
     color: #cbd5e1;
   }
 
+  .btn-jeb {
+    font-family: 'Cinzel', Georgia, serif;
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    color: #110e08;
+    font-weight: 900;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #ffd100;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .btn-jeb:hover {
+    background: #ffd100;
+    transform: scale(1.06);
+    box-shadow: 0 0 20px rgba(255, 209, 0, 0.85);
+  }
+  .btn-jeb.active {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    color: #ffd100;
+    border-color: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  }
+  
+  /* Jeb Landslide styling */
+  .zone-jeb {
+    fill: #f59e0b !important;
+    stroke: #fef08a !important;
+    stroke-width: 2.5 !important;
+    filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.85)) !important;
+    animation: jeb-glow 1.5s infinite alternate !important;
+  }
+  @keyframes jeb-glow {
+    0% { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6)); }
+    100% { filter: drop-shadow(0 0 18px rgba(255, 209, 0, 1)); }
+  }
+  .ev-seg.jeb-landslide {
+    background: linear-gradient(90deg, #eab308, #ffd100, #f59e0b) !important;
+    box-shadow: 0 0 20px rgba(255, 209, 0, 0.7);
+  }
+  .voter-chip.jeb {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fef08a;
+    border-color: rgba(245, 158, 11, 0.5);
+  }
+
   /* 270toWin Segmented Progress Bar */
   .electoral-bar-container {
     background: #070a10;
@@ -1214,9 +1263,12 @@
         <div class="map-panel-title">🗳️ AZEROTH ELECTORAL COLLEGE & BATTLEGROUND MAP</div>
         <div class="map-panel-sub">Live CNN-style territorial projection for Kalimdor & Eastern Kingdoms. Click any state/zone to inspect district voters.</div>
       </div>
-      <div class="election-ticker" id="election-ticker">
-        <span class="ticker-badge">🔴 BREAKING</span>
-        <span class="ticker-text" id="ticker-text">Hillsbrad Foothills & Ashenvale remain key swing states too close to call...</span>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-jeb" id="btn-jeb" onclick="toggleJebMode()" title="Please clap">⚡ Jeb!</button>
+        <div class="election-ticker" id="election-ticker">
+          <span class="ticker-badge">🔴 BREAKING</span>
+          <span class="ticker-text" id="ticker-text">Hillsbrad Foothills & Ashenvale remain key swing states too close to call...</span>
+        </div>
       </div>
     </div>
 
@@ -2090,6 +2142,10 @@ function startPolling() {
 }
 
 function recalc() {
+  if (isJebMode) {
+    applyJebLandslide();
+    return;
+  }
   const wc = parseFloat(document.getElementById("w-classic").value) || 0;
   const ws = parseFloat(document.getElementById("w-sod").value) || 0;
   const wr = parseFloat(document.getElementById("w-retail").value) || 0;
@@ -2511,8 +2567,137 @@ function updateElectionMapUI(electionData) {
 
 function selectZone(zoneId) {
   selectedZoneId = zoneId;
-  if (lastElectionData) {
+  if (lastElectionData && !isJebMode) {
     updateElectionMapUI(lastElectionData);
+  }
+}
+
+let isJebMode = false;
+
+function toggleJebMode() {
+  isJebMode = !isJebMode;
+  const jebBtn = document.getElementById("btn-jeb");
+  if (isJebMode) {
+    if (jebBtn) {
+      jebBtn.textContent = "⏪ Restore Reality";
+      jebBtn.classList.add("active");
+    }
+    applyJebLandslide();
+    showToast("👏 Please clap. (Jeb! sweeps Azeroth!)");
+  } else {
+    if (jebBtn) {
+      jebBtn.textContent = "⚡ Jeb!";
+      jebBtn.classList.remove("active");
+    }
+    const bToss = document.getElementById("bar-tossup");
+    if (bToss) bToss.className = "ev-seg tossup";
+    recalc();
+    showToast("Reality restored: Alliance vs Horde battle resumed!");
+  }
+}
+
+function applyJebLandslide() {
+  // Turn all SVG map zones to glowing gold
+  AZEROTH_STATES.forEach(st => {
+    const gEl = document.getElementById(`zone-${st.id}`);
+    if (gEl) {
+      const shape = gEl.querySelector("path, polygon, rect");
+      if (shape) {
+        shape.setAttribute("class", "zone-jeb");
+      }
+    }
+  });
+
+  // Turn progress bar 100% gold
+  const bSolA = document.getElementById("bar-solid-alliance");
+  const bLeanA = document.getElementById("bar-lean-alliance");
+  const bToss = document.getElementById("bar-tossup");
+  const bLeanH = document.getElementById("bar-lean-horde");
+  const bSolH = document.getElementById("bar-solid-horde");
+
+  if (bSolA) bSolA.style.width = "0%";
+  if (bLeanA) bLeanA.style.width = "0%";
+  if (bLeanH) bLeanH.style.width = "0%";
+  if (bSolH) bSolH.style.width = "0%";
+  if (bToss) {
+    bToss.style.width = "100%";
+    bToss.className = "ev-seg jeb-landslide";
+  }
+
+  const aTotalEl = document.getElementById("ev-alliance-total");
+  const hTotalEl = document.getElementById("ev-horde-total");
+  const targetEl = document.getElementById("ev-target-number");
+  if (aTotalEl) aTotalEl.textContent = "0";
+  if (hTotalEl) hTotalEl.textContent = "0";
+  if (targetEl) targetEl.textContent = "43 / 43 JEB! (100% LANDSLIDE)";
+
+  // Update Ticker
+  const tickerEl = document.getElementById("ticker-text");
+  if (tickerEl) {
+    tickerEl.textContent = "⚡ BREAKING: Jeb! sweeps all 43 delegates across Kalimdor & Eastern Kingdoms! (Please clap 👏)";
+  }
+
+  // Update Inspector
+  const iconEl = document.getElementById("insp-icon");
+  const nameEl = document.getElementById("insp-name");
+  const subEl = document.getElementById("insp-sub");
+  const evEl = document.getElementById("insp-ev");
+  const statusEl = document.getElementById("insp-status");
+  const marginEl = document.getElementById("insp-margin");
+  const chipsEl = document.getElementById("insp-voters-chips");
+  const loreEl = document.getElementById("insp-lore");
+
+  if (iconEl) iconEl.textContent = "⚡";
+  if (nameEl) nameEl.textContent = "Jeb! Territory";
+  if (subEl) subEl.textContent = "Kalimdor & Eastern Kingdoms • Total Landslide";
+  if (evEl) evEl.textContent = "43 EV";
+  if (statusEl) {
+    statusEl.textContent = "👑 100% JEB!";
+    statusEl.className = "insp-val tossup";
+  }
+  if (marginEl) {
+    marginEl.textContent = "+43 (UNANIMOUS)";
+    marginEl.className = "insp-val tossup";
+  }
+  if (chipsEl) {
+    chipsEl.innerHTML = "";
+    players.slice(0, 15).forEach(p => {
+      const chip = document.createElement("span");
+      chip.className = "voter-chip jeb";
+      chip.textContent = `⚡ ${p.name} (Clapping)`;
+      chipsEl.appendChild(chip);
+    });
+    if (players.length > 15) {
+      const moreChip = document.createElement("span");
+      moreChip.className = "voter-chip jeb";
+      moreChip.textContent = `+${players.length - 15} more cheering members`;
+      chipsEl.appendChild(moreChip);
+    }
+  }
+  if (loreEl) {
+    loreEl.textContent = '"An undeniable mandate across both Kalimdor and Eastern Kingdoms. A turtle in every pocket. Please clap."';
+  }
+
+  // Update Battleground cards
+  const bgGrid = document.getElementById("bg-cards-grid");
+  if (bgGrid) {
+    bgGrid.innerHTML = "";
+    const keySwingIds = ["HIL", "ASH", "STV", "ALT", "BAR"];
+    keySwingIds.forEach(kid => {
+      const st = AZEROTH_STATES.find(s => s.id === kid);
+      if (!st) return;
+      const card = document.createElement("div");
+      card.className = "bg-card tossup";
+      card.innerHTML = `
+        <div class="bg-card-title">
+          <span>⚡ ${st.name}</span>
+          <span class="bg-card-ev">${st.ev} EV</span>
+        </div>
+        <div class="bg-card-status" style="color: #fbbf24;">CALLED FOR JEB!</div>
+        <div class="bg-card-sub">100% Mandate (Please clap)</div>
+      `;
+      bgGrid.appendChild(card);
+    });
   }
 }
 
