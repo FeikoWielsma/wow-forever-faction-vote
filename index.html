@@ -32,7 +32,7 @@
     line-height: 1.5;
   }
   .container {
-    max-width: 1180px;
+    max-width: 1320px;
     margin: 0 auto;
   }
   header {
@@ -364,83 +364,245 @@
     color: #334155;
   }
 
-  /* TABLE */
-  .table-container {
-    background: white;
-    border-radius: 14px;
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    margin-bottom: 24px;
+  /* 2-COLUMN LAYOUT & COMPACT TABLES */
+  .roster-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
   }
-  table {
+  @media (max-width: 960px) {
+    .roster-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .roster-col, .roster-bottom {
+    display: flex;
+    flex-direction: column;
+  }
+  .col-header {
+    background: white;
+    padding: 10px 14px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 3.5px solid transparent;
+    box-shadow: var(--card-shadow);
+  }
+  .col-header.alliance-hdr {
+    border-top-color: var(--alliance-blue);
+    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  }
+  .col-header.horde-hdr {
+    border-top-color: var(--horde-red);
+    background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+  }
+  .col-header.abstain-hdr {
+    border-top-color: var(--abstain-gray);
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  }
+  .col-title {
+    font-size: 14.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f172a;
+  }
+  .col-count {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .col-score {
+    font-size: 13.5px;
+    font-weight: 800;
+  }
+  .alliance-hdr .col-score { color: var(--alliance-blue); }
+  .horde-hdr .col-score { color: var(--horde-red); }
+  .abstain-hdr .col-score { color: var(--abstain-gray); }
+
+  .table-container.compact {
+    background: white;
+    border-radius: 0 0 10px 10px;
+    box-shadow: var(--card-shadow);
+    overflow-x: auto;
+  }
+  .roster-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
   }
-  th {
+  .roster-table th {
     background: #0f172a;
     color: white;
     text-align: left;
-    padding: 12px 16px;
-    font-weight: 600;
-    font-size: 13px;
+    padding: 7px 8px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.3px;
     user-select: none;
   }
-  th.center, td.center { text-align: center; }
-  td {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
+  .roster-table th.center, .roster-table td.center { text-align: center; }
+  .roster-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
+    line-height: 1.25;
   }
-  tr.horde-row { background: #fffcfc; }
-  tr.horde-row:hover { background: #fee2e2; }
-  tr.alliance-row { background: #fbfdff; }
-  tr.alliance-row:hover { background: #dbeafe; }
-  tr.abstain-row { background: #f8fafc; }
-  tr.abstain-row:hover { background: #f1f5f9; }
+  .alliance-table tr:hover { background: #eff6ff; }
+  .horde-table tr:hover { background: #fff5f5; }
+  .abstain-table tr:hover { background: #f8fafc; }
 
-  /* FACTION TOGGLE DROPDOWN */
-  .faction-dropdown {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 13px;
+  /* NAME CELL & INLINE EDITING */
+  .name-cell {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+  .name-text {
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+    border-bottom: 1px dashed #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 130px;
+  }
+  .name-text:hover {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+  }
+  .btn-edit-name {
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 1px 3px;
+    color: #94a3b8;
+    border-radius: 3px;
+  }
+  .roster-table tr:hover .btn-edit-name {
+    opacity: 1;
+  }
+  .btn-edit-name:hover {
+    color: #0f172a;
+    background: #e2e8f0;
+  }
+  .name-edit-input {
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border: 1.5px solid #2563eb;
+    border-radius: 4px;
+    outline: none;
+    width: 120px;
+  }
+
+  /* FACTION SELECT */
+  .compact-faction-select {
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
-    border: 1.5px solid transparent;
+    border: 1px solid var(--border);
+    background: white;
+  }
+  .compact-faction-select.alliance { color: var(--alliance-blue); background: #eff6ff; border-color: #bfdbfe; }
+  .compact-faction-select.horde { color: var(--horde-red); background: #fff5f5; border-color: #fca5a5; }
+  .compact-faction-select.abstain { color: var(--abstain-gray); background: #f8fafc; border-color: #cbd5e1; }
+
+  /* DELETE BUTTON */
+  .btn-del {
+    background: none;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    color: #cbd5e1;
+    padding: 2px 5px;
+    border-radius: 4px;
     transition: all 0.15s ease;
+    line-height: 1;
   }
-  .faction-dropdown.horde {
+  .btn-del:hover {
+    color: #ef4444;
     background: #fee2e2;
-    color: var(--horde-red);
-    border-color: #fca5a5;
-  }
-  .faction-dropdown.alliance {
-    background: #dbeafe;
-    color: var(--alliance-blue);
-    border-color: #93c5fd;
-  }
-  .faction-dropdown.abstain {
-    background: #f1f5f9;
-    color: #64748b;
-    border-color: #cbd5e1;
   }
 
   /* CHECKBOX STYLING */
-  input[type="checkbox"] {
-    width: 19px;
-    height: 19px;
+  .roster-table input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
     cursor: pointer;
     accent-color: #2563eb;
     vertical-align: middle;
   }
   .player-score {
     font-weight: 800;
-    font-size: 16px;
+    font-size: 13.5px;
   }
   .player-score.abstaining {
     color: #94a3b8;
     font-weight: 600;
-    font-size: 13.5px;
+    font-size: 12px;
+  }
+
+  /* ADD PLAYER PANEL */
+  .add-player-panel {
+    background: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 16px;
+  }
+  .add-form-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .add-form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .add-input {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    min-width: 180px;
+    flex: 1;
+  }
+  .era-check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    background: #f8fafc;
+    padding: 5px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .era-check-label:hover {
+    background: #f1f5f9;
   }
 
   /* MODAL */
@@ -632,33 +794,114 @@
 
       <div class="search-filter-box">
         <input type="text" id="search-box" class="search-input" placeholder="🔍 Search player..." oninput="renderTable()">
-        <select id="filter-faction" class="filter-select" onchange="renderTable()">
-          <option value="all">All Factions</option>
-          <option value="Horde">Horde Only</option>
-          <option value="Alliance">Alliance Only</option>
-          <option value="Abstain">Abstain / Undecided</option>
-        </select>
+        <button class="btn btn-primary" onclick="toggleAddPlayerPanel()">➕ Add Player</button>
       </div>
     </div>
   </div>
 
-  <!-- TABLE -->
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="width: 50px;">#</th>
-          <th>Player Name</th>
-          <th style="width: 200px;">Faction Vote (Swap)</th>
-          <th class="center" style="width: 100px;">Classic</th>
-          <th class="center" style="width: 100px;">SoD</th>
-          <th class="center" style="width: 100px;">Retail</th>
-          <th class="center" style="width: 150px;" id="th-vote-val">Voting Power</th>
-        </tr>
-      </thead>
-      <tbody id="roster-tbody">
-      </tbody>
-    </table>
+  <!-- ADD PLAYER COLLAPSIBLE PANEL -->
+  <div id="add-player-panel" class="add-player-panel" style="display: none;">
+    <div class="add-form-title">➕ Add New Guild Member</div>
+    <div class="add-form-row">
+      <input type="text" id="new-player-name" class="add-input" placeholder="Player or Discord name..." onkeydown="if(event.key==='Enter') submitAddPlayer()">
+      <select id="new-player-faction" class="filter-select">
+        <option value="Alliance" selected>🔵 Alliance</option>
+        <option value="Horde">🔴 Horde</option>
+        <option value="Abstain">⚪ Abstain</option>
+      </select>
+      <label class="era-check-label"><input type="checkbox" id="new-player-c"> Classic</label>
+      <label class="era-check-label"><input type="checkbox" id="new-player-s"> SoD</label>
+      <label class="era-check-label"><input type="checkbox" id="new-player-r"> Retail</label>
+      <button class="btn btn-success" onclick="submitAddPlayer()">Save Player</button>
+      <button class="btn btn-outline" onclick="toggleAddPlayerPanel(false)">Cancel</button>
+    </div>
+  </div>
+
+  <!-- 2-COLUMN ROSTER GRID (ALLIANCE LEFT, HORDE RIGHT) -->
+  <div class="roster-grid">
+    <!-- LEFT: ALLIANCE -->
+    <div class="roster-col alliance-col">
+      <div class="col-header alliance-hdr">
+        <div class="col-title">
+          <span>🔵 Alliance</span>
+          <span class="col-count" id="alliance-col-count">0 players</span>
+        </div>
+        <div class="col-score" id="alliance-col-score">0 pts</div>
+      </div>
+      <div class="table-container compact">
+        <table class="roster-table alliance-table">
+          <thead>
+            <tr>
+              <th style="width: 24px;">#</th>
+              <th>Player Name</th>
+              <th class="center" style="width: 26px;" title="Classic 2019">C</th>
+              <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
+              <th class="center" style="width: 26px;" title="Retail">R</th>
+              <th class="center" style="width: 38px;">Pts</th>
+              <th class="center" style="width: 80px;">Move</th>
+              <th class="center" style="width: 22px;"></th>
+            </tr>
+          </thead>
+          <tbody id="alliance-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: HORDE -->
+    <div class="roster-col horde-col">
+      <div class="col-header horde-hdr">
+        <div class="col-title">
+          <span>🔴 Horde</span>
+          <span class="col-count" id="horde-col-count">0 players</span>
+        </div>
+        <div class="col-score" id="horde-col-score">0 pts</div>
+      </div>
+      <div class="table-container compact">
+        <table class="roster-table horde-table">
+          <thead>
+            <tr>
+              <th style="width: 24px;">#</th>
+              <th>Player Name</th>
+              <th class="center" style="width: 26px;" title="Classic 2019">C</th>
+              <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
+              <th class="center" style="width: 26px;" title="Retail">R</th>
+              <th class="center" style="width: 38px;">Pts</th>
+              <th class="center" style="width: 80px;">Move</th>
+              <th class="center" style="width: 22px;"></th>
+            </tr>
+          </thead>
+          <tbody id="horde-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: ABSTAIN / SITTING OUT -->
+  <div class="roster-bottom abstain-section">
+    <div class="col-header abstain-hdr">
+      <div class="col-title">
+        <span>⚪ Abstain / Sitting Out / Undecided</span>
+        <span class="col-count" id="abstain-col-count">0 players</span>
+      </div>
+      <div class="col-score" id="abstain-col-score">0 potential pts</div>
+    </div>
+    <div class="table-container compact">
+      <table class="roster-table abstain-table">
+        <thead>
+          <tr>
+            <th style="width: 24px;">#</th>
+            <th>Player Name</th>
+            <th class="center" style="width: 26px;" title="Classic 2019">C</th>
+            <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
+            <th class="center" style="width: 26px;" title="Retail">R</th>
+            <th class="center" style="width: 50px;">Potential</th>
+            <th class="center" style="width: 100px;">Assign Faction</th>
+            <th class="center" style="width: 22px;"></th>
+          </tr>
+        </thead>
+        <tbody id="abstain-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -813,53 +1056,234 @@ function updateModeUI() {
     presetsBar.style.pointerEvents = "none";
     document.getElementById("badge-horde-mode").textContent = "1-Vote Mode";
     document.getElementById("badge-alliance-mode").textContent = "1-Vote Mode";
-    document.getElementById("th-vote-val").textContent = "Voting Power (1v)";
   } else {
     wSection.classList.remove("disabled");
     presetsBar.style.opacity = "1";
     presetsBar.style.pointerEvents = "auto";
     document.getElementById("badge-horde-mode").textContent = "Weighted Mode";
     document.getElementById("badge-alliance-mode").textContent = "Weighted Mode";
-    document.getElementById("th-vote-val").textContent = "Weighted Score";
+  }
+}
+
+let editingPlayerId = null;
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function startEditName(id) {
+  editingPlayerId = id;
+  renderTable();
+  const input = document.getElementById(`edit_input_${id}`);
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}
+
+function handleNameKey(event, id, input) {
+  if (event.key === "Enter") {
+    input.blur();
+  } else if (event.key === "Escape") {
+    editingPlayerId = null;
+    renderTable();
+  }
+}
+
+async function savePlayerName(id, newName) {
+  const cleanName = (newName || "").trim();
+  const p = players.find(x => x.id === id);
+  if (!p) {
+    editingPlayerId = null;
+    renderTable();
+    return;
+  }
+  if (!cleanName || cleanName === p.name) {
+    editingPlayerId = null;
+    renderTable();
+    return;
+  }
+  p.name = cleanName;
+  editingPlayerId = null;
+  renderTable();
+  recalc();
+  syncPlayerToDb(id, { name: cleanName });
+  showToast(`Renamed to "${cleanName}"`);
+}
+
+function toggleAddPlayerPanel(show) {
+  const panel = document.getElementById("add-player-panel");
+  if (!panel) return;
+  const shouldShow = show !== undefined ? show : (panel.style.display === "none");
+  panel.style.display = shouldShow ? "block" : "none";
+  if (shouldShow) {
+    const input = document.getElementById("new-player-name");
+    if (input) input.focus();
+  }
+}
+
+async function submitAddPlayer() {
+  const nameInput = document.getElementById("new-player-name");
+  const factionSelect = document.getElementById("new-player-faction");
+  const cCheck = document.getElementById("new-player-c");
+  const sCheck = document.getElementById("new-player-s");
+  const rCheck = document.getElementById("new-player-r");
+
+  const name = (nameInput.value || "").trim();
+  if (!name) {
+    showToast("⚠️ Please enter a player name");
+    nameInput.focus();
+    return;
+  }
+
+  const faction = factionSelect.value;
+  const c = cCheck.checked;
+  const s = sCheck.checked;
+  const r = rCheck.checked;
+
+  updateStatusBadge("Saving to SQLite...", "saving");
+
+  const newPlayerObj = { name, faction, c, s, r };
+
+  try {
+    if (isBackendConnected) {
+      const res = await fetch("/api/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPlayerObj)
+      });
+      if (!res.ok) throw new Error("Failed to add player");
+      const savedPlayer = await res.json();
+      players.push(savedPlayer);
+      updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+    } else {
+      const maxId = players.reduce((max, p) => Math.max(max, p.id || 0), 0);
+      const offlinePlayer = {
+        id: maxId + 1,
+        name,
+        faction,
+        c,
+        s,
+        r,
+        isSodam: false
+      };
+      players.push(offlinePlayer);
+    }
+
+    nameInput.value = "";
+    cCheck.checked = false;
+    sCheck.checked = false;
+    rCheck.checked = false;
+    toggleAddPlayerPanel(false);
+
+    renderTable();
+    recalc();
+    showToast(`Added "${name}" to ${faction}!`);
+  } catch (err) {
+    console.error(err);
+    updateStatusBadge("Sync Error", "offline");
+    showToast("⚠️ Error adding player");
+  }
+}
+
+async function removePlayer(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Remove "${p.name}" from the voting roster?`)) return;
+
+  updateStatusBadge("Saving to SQLite...", "saving");
+  try {
+    if (isBackendConnected) {
+      const res = await fetch(`/api/players/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete player");
+      updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
+    }
+    players = players.filter(x => x.id !== id);
+    renderTable();
+    recalc();
+    showToast(`Removed "${p.name}"`);
+  } catch (err) {
+    console.error(err);
+    updateStatusBadge("Sync Error", "offline");
+    showToast("⚠️ Error removing player");
   }
 }
 
 function renderTable() {
-  const tbody = document.getElementById("roster-tbody");
-  tbody.innerHTML = "";
+  const aTbody = document.getElementById("alliance-tbody");
+  const hTbody = document.getElementById("horde-tbody");
+  const absTbody = document.getElementById("abstain-tbody");
+
+  if (!aTbody || !hTbody || !absTbody) return;
+
+  aTbody.innerHTML = "";
+  hTbody.innerHTML = "";
+  absTbody.innerHTML = "";
 
   const query = (document.getElementById("search-box").value || "").toLowerCase();
-  const filterFaction = document.getElementById("filter-faction").value;
 
   const filtered = players.filter(p => {
-    const matchName = p.name.toLowerCase().includes(query);
-    const matchFac = filterFaction === "all" || p.faction === filterFaction;
-    return matchName && matchFac;
+    return p.name.toLowerCase().includes(query);
   });
 
-  filtered.forEach((p, idx) => {
+  const allianceList = filtered.filter(p => p.faction === "Alliance");
+  const hordeList = filtered.filter(p => p.faction === "Horde");
+  const abstainList = filtered.filter(p => p.faction === "Abstain");
+
+  function buildRow(p, idx) {
+    const isEditing = editingPlayerId === p.id;
     const tr = document.createElement("tr");
-    tr.className = p.faction === "Horde" ? "horde-row" : (p.faction === "Alliance" ? "alliance-row" : "abstain-row");
+
+    let nameHtml = "";
+    if (isEditing) {
+      nameHtml = `<input type="text" class="name-edit-input" id="edit_input_${p.id}" value="${escapeHtml(p.name)}" 
+        onkeydown="handleNameKey(event, ${p.id}, this)" 
+        onblur="savePlayerName(${p.id}, this.value)">`;
+    } else {
+      nameHtml = `
+        <div class="name-cell">
+          <span class="name-text" title="Click to rename" onclick="startEditName(${p.id})">${escapeHtml(p.name)}</span>
+          ${p.isSodam ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 800;">GM</span>' : ''}
+          <button class="btn-edit-name" title="Rename" onclick="startEditName(${p.id})">✏️</button>
+        </div>
+      `;
+    }
+
+    const factionSelectHtml = `
+      <select class="compact-faction-select ${p.faction.toLowerCase()}" onchange="changeFaction(${p.id}, this.value)">
+        <option value="Alliance" ${p.faction === 'Alliance' ? 'selected' : ''}>🔵 Alliance</option>
+        <option value="Horde" ${p.faction === 'Horde' ? 'selected' : ''}>🔴 Horde</option>
+        <option value="Abstain" ${p.faction === 'Abstain' ? 'selected' : ''}>⚪ Abstain</option>
+      </select>
+    `;
 
     tr.innerHTML = `
-      <td>${idx + 1}</td>
-      <td style="font-weight: 700; color: #0f172a;">
-        ${p.name} ${p.isSodam ? '<span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 800;">👑 GM</span>' : ''}
-      </td>
-      <td>
-        <select class="faction-dropdown ${p.faction.toLowerCase()}" onchange="changeFaction(${p.id}, this.value)">
-          <option value="Horde" ${p.faction === 'Horde' ? 'selected' : ''}>🔴 Horde</option>
-          <option value="Alliance" ${p.faction === 'Alliance' ? 'selected' : ''}>🔵 Alliance</option>
-          <option value="Abstain" ${p.faction === 'Abstain' ? 'selected' : ''}>⚪ Abstain</option>
-        </select>
-      </td>
+      <td style="color: #94a3b8; font-size: 11px;">${idx + 1}</td>
+      <td>${nameHtml}</td>
       <td class="center"><input type="checkbox" ${p.c ? 'checked' : ''} onchange="toggleBox(${p.id}, 'c', this.checked)"></td>
       <td class="center"><input type="checkbox" ${p.s ? 'checked' : ''} onchange="toggleBox(${p.id}, 's', this.checked)"></td>
       <td class="center"><input type="checkbox" ${p.r ? 'checked' : ''} onchange="toggleBox(${p.id}, 'r', this.checked)"></td>
       <td class="center player-score ${p.faction === 'Abstain' ? 'abstaining' : ''}" id="score_${p.id}">0</td>
+      <td class="center">${factionSelectHtml}</td>
+      <td class="center"><button class="btn-del" title="Remove player" onclick="removePlayer(${p.id})">✕</button></td>
     `;
-    tbody.appendChild(tr);
-  });
+    return tr;
+  }
+
+  allianceList.forEach((p, idx) => aTbody.appendChild(buildRow(p, idx)));
+  hordeList.forEach((p, idx) => hTbody.appendChild(buildRow(p, idx)));
+  abstainList.forEach((p, idx) => absTbody.appendChild(buildRow(p, idx)));
+
+  if (allianceList.length === 0) {
+    aTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Alliance voters matching filter</td></tr>`;
+  }
+  if (hordeList.length === 0) {
+    hTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Horde voters matching filter</td></tr>`;
+  }
+  if (abstainList.length === 0) {
+    absTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No abstaining players matching filter</td></tr>`;
+  }
 }
 
 async function changeFaction(id, newFaction) {
@@ -938,7 +1362,12 @@ let pollTimer = null;
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
-    if (document.hidden || document.activeElement === document.getElementById("search-box")) return;
+    if (document.hidden || editingPlayerId !== null || 
+        document.activeElement === document.getElementById("search-box") || 
+        document.activeElement === document.getElementById("new-player-name") ||
+        (document.activeElement && document.activeElement.classList.contains("name-edit-input"))) {
+      return;
+    }
     try {
       const res = await fetch("/api/state");
       if (res.ok) {
@@ -1030,6 +1459,22 @@ function recalc() {
   document.getElementById("abstain-sub").textContent = isOneVote
     ? `${abstainCount} abstaining players (${absPct}% of total)`
     : `${absPct}% of total pool (${abstainCount} players)`;
+
+  // Update column sub-headers
+  const aCountEl = document.getElementById("alliance-col-count");
+  if (aCountEl) aCountEl.textContent = `${allianceCount} voters`;
+  const aScoreEl = document.getElementById("alliance-col-score");
+  if (aScoreEl) aScoreEl.textContent = `${allianceTotal} ${isOneVote ? 'votes' : 'pts'}`;
+
+  const hCountEl = document.getElementById("horde-col-count");
+  if (hCountEl) hCountEl.textContent = `${hordeCount} voters`;
+  const hScoreEl = document.getElementById("horde-col-score");
+  if (hScoreEl) hScoreEl.textContent = `${hordeTotal} ${isOneVote ? 'votes' : 'pts'}`;
+
+  const absCountEl = document.getElementById("abstain-col-count");
+  if (absCountEl) absCountEl.textContent = `${abstainCount} players`;
+  const absScoreEl = document.getElementById("abstain-col-score");
+  if (absScoreEl) absScoreEl.textContent = `${abstainTotal} ${isOneVote ? 'potential votes' : 'potential pts'}`;
 
   const margin = Math.abs(hordeTotal - allianceTotal);
   const swingBadge = document.getElementById("abstain-swing-badge");
@@ -1218,7 +1663,7 @@ function copyTSV() {
     tsv += `${p.name}\t${p.faction}\t${p.c ? 'TRUE' : 'FALSE'}\t${p.s ? 'TRUE' : 'FALSE'}\t${p.r ? 'TRUE' : 'FALSE'}\n`;
   });
   navigator.clipboard.writeText(tsv).then(() => {
-    showToast("Copied 42 players to clipboard! Paste directly into Google Sheets.");
+    showToast(`Copied ${players.length} players to clipboard! Paste directly into Google Sheets.`);
   });
 }
 

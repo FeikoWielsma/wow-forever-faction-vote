@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 from typing import Optional
@@ -7,7 +8,7 @@ from pydantic import BaseModel
 import uvicorn
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "wow_vote.db"
+DB_PATH = Path(os.environ.get("DB_PATH", BASE_DIR / "wow_vote.db"))
 HTML_PATH = BASE_DIR / "index.html"
 
 app = FastAPI(title="WoW Forever Faction Vote Simulator")
@@ -68,6 +69,61 @@ DEFAULT_SETTINGS = {
 }
 
 
+GCS_BUCKET = os.environ.get("GCS_BUCKET")
+_storage_client = None
+
+
+def get_storage_client():
+    global _storage_client
+    if _storage_client is None:
+        try:
+            from google.cloud import storage
+            _storage_client = storage.Client()
+        except Exception as e:
+            print(f"⚠️ Warning: Could not initialize Google Cloud Storage client: {e}")
+            return None
+    return _storage_client
+
+
+def sync_from_gcs():
+    if not GCS_BUCKET:
+        return
+    client = get_storage_client()
+    if not client:
+        return
+    try:
+        bucket = client.bucket(GCS_BUCKET)
+        blob = bucket.blob("wow_vote.db")
+        if blob.exists():
+            print(f"📥 Downloading latest database from gs://{GCS_BUCKET}/wow_vote.db ...")
+            blob.download_to_filename(str(DB_PATH))
+            print("✅ Database successfully restored from GCS.")
+        else:
+            print(f"ℹ️ No database found in gs://{GCS_BUCKET}/wow_vote.db. Initial seed will be uploaded.")
+    except Exception as e:
+        print(f"⚠️ Warning: Failed to sync database from GCS: {e}")
+
+
+def sync_to_gcs():
+    if not GCS_BUCKET:
+        return
+    client = get_storage_client()
+    if not client:
+        return
+    try:
+        # Checkpoint WAL so that all data is flushed from WAL into the main DB file
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        conn.close()
+
+        bucket = client.bucket(GCS_BUCKET)
+        blob = bucket.blob("wow_vote.db")
+        blob.upload_from_filename(str(DB_PATH))
+        print(f"📤 Database successfully synced to gs://{GCS_BUCKET}/wow_vote.db")
+    except Exception as e:
+        print(f"⚠️ Warning: Failed to sync database to GCS: {e}")
+
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -76,7 +132,9 @@ def get_db():
 
 
 def init_db():
+    sync_from_gcs()
     conn = get_db()
+    seeded = False
     with conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS players (
@@ -99,6 +157,7 @@ def init_db():
         # Check if players table is empty, seed if so
         cur = conn.execute("SELECT COUNT(*) as count FROM players")
         if cur.fetchone()["count"] == 0:
+            seeded = True
             for p in DEFAULT_PLAYERS:
                 conn.execute(
                     """
@@ -122,15 +181,27 @@ def init_db():
                 "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (k, v)
             )
 
+    if seeded:
+        sync_to_gcs()
+
 
 init_db()
 
 
 class PlayerUpdate(BaseModel):
+    name: Optional[str] = None
     faction: Optional[str] = None
     c: Optional[bool] = None
     s: Optional[bool] = None
     r: Optional[bool] = None
+
+
+class PlayerCreate(BaseModel):
+    name: str
+    faction: str = "Alliance"
+    c: bool = False
+    s: bool = False
+    r: bool = False
 
 
 class SettingsUpdate(BaseModel):
@@ -178,6 +249,57 @@ def get_state():
     return {"players": players, "settings": settings_out}
 
 
+@app.post("/api/players")
+def create_player(player: PlayerCreate):
+    name = player.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+    if player.faction not in ("Horde", "Alliance", "Abstain"):
+        raise HTTPException(status_code=400, detail="Invalid faction")
+
+    conn = get_db()
+    with conn:
+        cur = conn.execute(
+            """
+            INSERT INTO players (name, faction, classic, sod, retail, is_sodam)
+            VALUES (?, ?, ?, ?, ?, 0)
+            """,
+            (
+                name,
+                player.faction,
+                1 if player.c else 0,
+                1 if player.s else 0,
+                1 if player.r else 0,
+            ),
+        )
+        new_id = cur.lastrowid
+        row = conn.execute("SELECT * FROM players WHERE id = ?", (new_id,)).fetchone()
+
+    sync_to_gcs()
+
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "faction": row["faction"],
+        "c": bool(row["classic"]),
+        "s": bool(row["sod"]),
+        "r": bool(row["retail"]),
+        "isSodam": bool(row["is_sodam"]),
+    }
+
+
+@app.delete("/api/players/{player_id}")
+def delete_player(player_id: int):
+    conn = get_db()
+    with conn:
+        cur = conn.execute("DELETE FROM players WHERE id = ?", (player_id,))
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Player not found")
+
+    sync_to_gcs()
+    return {"status": "deleted", "id": player_id}
+
+
 @app.patch("/api/players/{player_id}")
 def update_player(player_id: int, update: PlayerUpdate):
     conn = get_db()
@@ -189,6 +311,13 @@ def update_player(player_id: int, update: PlayerUpdate):
 
         updates = []
         params = []
+        if update.name is not None:
+            clean_name = update.name.strip()
+            if not clean_name:
+                raise HTTPException(status_code=400, detail="Name cannot be empty")
+            updates.append("name = ?")
+            params.append(clean_name)
+
         if update.faction is not None:
             if update.faction not in ("Horde", "Alliance", "Abstain"):
                 raise HTTPException(status_code=400, detail="Invalid faction")
@@ -213,6 +342,8 @@ def update_player(player_id: int, update: PlayerUpdate):
             conn.execute(query, tuple(params))
 
         updated_row = conn.execute("SELECT * FROM players WHERE id = ?", (player_id,)).fetchone()
+
+    sync_to_gcs()
 
     return {
         "id": updated_row["id"],
@@ -239,6 +370,8 @@ def update_settings(update: SettingsUpdate):
             if update.voting_mode not in ("weighted", "onevote"):
                 raise HTTPException(status_code=400, detail="Invalid voting mode")
             conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('voting_mode', ?)", (update.voting_mode,))
+
+    sync_to_gcs()
 
     return {"status": "ok"}
 
@@ -269,10 +402,15 @@ def reset_database():
         for k, v in DEFAULT_SETTINGS.items():
             conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (k, v))
 
+    sync_to_gcs()
+
     return {"status": "reset_successful"}
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "127.0.0.1")
     print("🚀 Starting WoW Forever Faction Vote Server...")
-    print("👉 Open your browser at: http://localhost:8000")
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    print(f"👉 Open your browser at: http://{host}:{port}")
+    uvicorn.run("server:app", host=host, port=port, reload=(host == "127.0.0.1"))
+

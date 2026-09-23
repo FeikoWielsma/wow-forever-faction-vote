@@ -49,6 +49,22 @@ Or on Windows, simply double-click **`run.bat`**.
 Then open your browser at:
 👉 **[http://localhost:8000](http://localhost:8000)**
 
+### Deploy to Google Cloud (Cloud Run)
+
+The service can be built and deployed directly with `gcloud`:
+
+```bash
+gcloud run deploy wow-faction-vote \
+  --project=feiko-homepage \
+  --region=europe-west4 \
+  --source=. \
+  --set-env-vars="GCS_BUCKET=wow-vote-data-207474260976" \
+  --allow-unauthenticated \
+  --max-instances=1
+```
+
+Live deployment: 👉 **[https://wow-faction-vote-207474260976.europe-west4.run.app](https://wow-faction-vote-207474260976.europe-west4.run.app)**
+
 ---
 
 ## 🗄️ Architecture & API
