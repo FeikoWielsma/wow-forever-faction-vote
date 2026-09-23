@@ -222,6 +222,7 @@
     border-radius: 10px;
   }
   .swing-alert.critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .swing-alert.warning { background: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.4); }
   .swing-alert.safe { background: rgba(16, 185, 129, 0.2); color: #86efac; border: 1px solid rgba(16, 185, 129, 0.4); }
 
   .vote-mode-badge {
@@ -2343,16 +2344,28 @@ function recalc() {
 
   const margin = Math.abs(hordeTotal - allianceTotal);
   const swingBadge = document.getElementById("abstain-swing-badge");
+  const unit = isOneVote ? "votes" : "pts";
 
-  if (abstainTotal > margin && margin > 0) {
+  if (margin === 0) {
+    if (abstainTotal > 0) {
+      swingBadge.className = "swing-alert warning";
+      swingBadge.textContent = `⚠️ Dead Heat (${abstainTotal} ${unit} can break tie)`;
+    } else {
+      swingBadge.className = "swing-alert safe";
+      swingBadge.textContent = `Dead Heat (0 abstaining)`;
+    }
+  } else if (abstainTotal > margin) {
     swingBadge.className = "swing-alert critical";
-    swingBadge.textContent = `⚠️ Could Flip Vote (${abstainTotal} > ${margin} lead)`;
-  } else if (margin === 0 && abstainTotal > 0) {
-    swingBadge.className = "swing-alert critical";
-    swingBadge.textContent = `⚠️ Tiebreaker Potential (${abstainTotal} pts)`;
+    swingBadge.textContent = `⚠️ Could Flip Lead (${abstainTotal} uncast > ${margin} lead)`;
+  } else if (abstainTotal === margin) {
+    swingBadge.className = "swing-alert warning";
+    swingBadge.textContent = `⚠️ Could Force Tie (${abstainTotal} uncast = ${margin} lead)`;
+  } else if (abstainTotal > 0) {
+    swingBadge.className = "swing-alert safe";
+    swingBadge.textContent = `✓ Lead Holds (${margin} lead > ${abstainTotal} uncast)`;
   } else {
     swingBadge.className = "swing-alert safe";
-    swingBadge.textContent = abstainTotal === 0 ? "0 abstaining" : `✓ Lead holds (${margin} > ${abstainTotal})`;
+    swingBadge.textContent = `✓ 0 Abstaining (All votes cast)`;
   }
 
   const winnerEl = document.getElementById("winner-badge");
