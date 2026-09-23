@@ -4,14 +4,18 @@ from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DB_PATH", BASE_DIR / "wow_vote.db"))
 HTML_PATH = BASE_DIR / "index.html"
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(title="WoW Forever Faction Vote Simulator")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 DEFAULT_PLAYERS = [
     # Horde (20)
