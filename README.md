@@ -65,6 +65,14 @@ gcloud run deploy wow-faction-vote \
 
 Live deployment: 👉 **[https://wow-faction-vote-207474260976.europe-west4.run.app](https://wow-faction-vote-207474260976.europe-west4.run.app)**
 
+### Near-live Discord sync
+
+The `wolk` timer in [`deploy/wolk/compose.yml`](deploy/wolk/compose.yml) calls Cloud Run every 20 seconds. Cloud Run remains the only database writer. The timer uses `WOW_VOTE_SYNC_TOKEN` from the homeserver's Bitwarden secret environment; Cloud Run receives the same value as `SYNC_TOKEN` from Google Secret Manager. No Discord token or SQLite database is stored on `wolk`.
+
+The sync caches Discord user-to-roster matches in SQLite, checks both poll answers, and uploads the database to GCS only when state changes. It records observed faction changes and vote withdrawals in `/history`. Changes reversed between polls cannot be reconstructed. The public roster and history pages refresh every 3 and 4 seconds, respectively.
+
+To add the timer on `wolk`, copy the Compose file to `/docker/wow-vote-poller/compose.yml`, create `WOW_VOTE_SYNC_TOKEN` using the Bitwarden bootstrap script, add `wow-vote-poller/compose.yml` to `/docker/compose.yml`, then run `docker compose up -d wow-vote-poller` from `/docker`. The sync endpoint requires the same token in the `X-Sync-Token` header; the manual Admin button prompts for it.
+
 ---
 
 ## 🗄️ Architecture & API

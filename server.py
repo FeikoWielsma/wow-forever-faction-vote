@@ -1,8 +1,14 @@
 import os
 import sqlite3
+import hmac
+import json
+import threading
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -17,6 +23,7 @@ STATIC_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(title="WoW Forever Faction Vote Simulator")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+sync_lock = threading.Lock()
 
 DEFAULT_PLAYERS = [
     # Horde (20)
@@ -76,6 +83,7 @@ DEFAULT_SETTINGS = {
 
 GCS_BUCKET = os.environ.get("GCS_BUCKET")
 _storage_client = None
+gcs_sync_pending = False
 
 
 def get_storage_client():
@@ -110,11 +118,13 @@ def sync_from_gcs():
 
 
 def sync_to_gcs():
+    global gcs_sync_pending
     if not GCS_BUCKET:
-        return
+        return True
+    gcs_sync_pending = True
     client = get_storage_client()
     if not client:
-        return
+        return False
     try:
         # Checkpoint WAL so that all data is flushed from WAL into the main DB file
         conn = sqlite3.connect(DB_PATH)
@@ -124,9 +134,12 @@ def sync_to_gcs():
         bucket = client.bucket(GCS_BUCKET)
         blob = bucket.blob("wow_vote.db")
         blob.upload_from_filename(str(DB_PATH))
+        gcs_sync_pending = False
         print(f"📤 Database successfully synced to gs://{GCS_BUCKET}/wow_vote.db")
+        return True
     except Exception as e:
         print(f"⚠️ Warning: Failed to sync database to GCS: {e}")
+        return False
 
 
 def get_db():
@@ -170,6 +183,14 @@ def init_db():
                 details TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discord_voters (
+                user_id TEXT PRIMARY KEY,
+                player_id INTEGER,
+                display_name TEXT NOT NULL,
+                faction TEXT NOT NULL
+            )
+        """)
 
         # Check if players table is empty, seed if so
         cur = conn.execute("SELECT COUNT(*) as count FROM players")
@@ -200,6 +221,7 @@ def init_db():
 
     if seeded:
         sync_to_gcs()
+    conn.close()
 
 
 init_db()
@@ -250,6 +272,7 @@ def get_state():
     with conn:
         p_rows = conn.execute("SELECT * FROM players ORDER BY id ASC").fetchall()
         s_rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    conn.close()
 
     players = [
         {
@@ -446,12 +469,7 @@ def normalize_name(s: str) -> str:
     return s.lower().replace(" ", "").replace("_", "").replace(".", "").replace("/", "").strip()
 
 
-@app.post("/api/discord/sync")
-def sync_discord_votes():
-    import urllib.request
-    import urllib.parse
-    import json
-
+def _sync_discord_votes():
     bot_token = os.environ.get("DISCORD_BOT_TOKEN", DISCORD_BOT_TOKEN)
     if not bot_token:
         raise HTTPException(status_code=500, detail="DISCORD_BOT_TOKEN environment variable not set")
@@ -465,22 +483,49 @@ def sync_discord_votes():
         "User-Agent": "WoWFactionVoteBot (https://wow-faction-vote, 1.0)",
     }
 
-    def discord_fetch(endpoint: str):
+    def discord_fetch(endpoint: str, allow_missing: bool = False):
         url = f"{DISCORD_API}{endpoint}"
         req = urllib.request.Request(url, headers=headers)
-        try:
-            with urllib.request.urlopen(req) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except Exception as e:
-            print(f"Discord API error {endpoint}: {e}")
-            return None
+        for attempt in range(4):
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                if allow_missing and e.code == 404:
+                    return {}
+                if e.code == 429:
+                    try:
+                        delay = float(e.headers.get("Retry-After", "60"))
+                    except (TypeError, ValueError):
+                        delay = 60
+                    if attempt < 3 and 0 <= delay <= 30:
+                        time.sleep(delay + 0.25)
+                        continue
+                    raise HTTPException(status_code=429, detail="Discord API rate limited") from e
+                # A failed fetch must never be mistaken for an empty poll.
+                raise HTTPException(status_code=502, detail=f"Discord API returned {e.code}") from e
+            except (urllib.error.URLError, TimeoutError, ValueError) as e:
+                raise HTTPException(status_code=502, detail="Discord API unavailable") from e
+
+    def answer_voters(answer_id: int):
+        users = []
+        after = None
+        while True:
+            endpoint = f"/channels/{c_id}/polls/{m_id}/answers/{answer_id}?limit=100"
+            if after:
+                endpoint += f"&after={after}"
+            page = discord_fetch(endpoint)
+            batch = page.get("users")
+            if not isinstance(batch, list):
+                raise HTTPException(status_code=502, detail="Invalid Discord poll response")
+            users.extend(batch)
+            if len(batch) < 100:
+                return users
+            after = batch[-1]["id"]
 
     # Fetch users from Discord Native Poll: Answer 1 = Horde, Answer 2 = Alliance
-    horde_res = discord_fetch(f"/channels/{c_id}/polls/{m_id}/answers/1?limit=100") or {}
-    ally_res = discord_fetch(f"/channels/{c_id}/polls/{m_id}/answers/2?limit=100") or {}
-
-    horde_users = horde_res.get("users", [])
-    ally_users = ally_res.get("users", [])
+    horde_users = answer_voters(1)
+    ally_users = answer_voters(2)
 
     user_votes = {}
     for u in ally_users:
@@ -495,21 +540,23 @@ def sync_discord_votes():
             user_votes[uid] = {"voted_ally": False, "voted_horde": False, "u": u}
         user_votes[uid]["voted_horde"] = True
 
-    # Fetch member nicknames
-    for uid, d in user_votes.items():
-        m_info = discord_fetch(f"/guilds/{g_id}/members/{uid}")
-        d["nick"] = m_info.get("nick") if m_info else None
-
     conn = get_db()
     updated = []
     unmatched = []
+    changed = False
 
     with conn:
         all_players = conn.execute("SELECT id, name, faction FROM players").fetchall()
+        players_by_id = {p["id"]: p for p in all_players}
+        known_voters = {
+            row["user_id"]: row
+            for row in conn.execute("SELECT * FROM discord_voters").fetchall()
+        }
+        current_factions = {p["id"]: p["faction"] for p in all_players}
 
         for uid, d in user_votes.items():
             u = d["u"]
-            nick = d["nick"]
+            known = known_voters.get(uid)
             uname = u.get("username")
             gname = u.get("global_name")
 
@@ -522,73 +569,121 @@ def sync_discord_votes():
             else:
                 continue
 
-            candidates = [c for c in [nick, gname, uname] if c]
-            matched_player = None
+            matched_player = players_by_id.get(known["player_id"]) if known else None
+            display_name = (known["display_name"] if known else None) or gname or uname or uid
+            if not matched_player:
+                m_info = discord_fetch(f"/guilds/{g_id}/members/{uid}", allow_missing=True) if not known else {}
+                nick = m_info.get("nick") if m_info else None
+                display_name = nick or gname or uname or uid
+                if known:
+                    display_name = known["display_name"]
+                candidates = [c for c in [nick, known["display_name"] if known else None, gname, uname] if c]
+                for p in all_players:
+                    norm_p = normalize_name(p["name"])
+                    for c in candidates:
+                        norm_c = normalize_name(c)
+                        if norm_p == norm_c or norm_p in norm_c or norm_c in norm_p:
+                            matched_player = p
+                            break
+                        # Special guild aliases
+                        if ("xak" in norm_p and "agravain" in norm_c) or ("agravain" in norm_p and "xak" in norm_c):
+                            matched_player = p
+                            break
+                        if ("fartlord" in norm_p and "tom" in norm_c) or ("tom" in norm_p and "fartlord" in norm_c):
+                            matched_player = p
+                            break
+                        if ("purpleman" in norm_p and "marsian" in norm_c) or ("marsian" in norm_p and "purpleman" in norm_c):
+                            matched_player = p
+                            break
+                        if ("brokest" in norm_p and "slavedemorto" in norm_c) or ("slavedemorto" in norm_p and "brokest" in norm_c):
+                            matched_player = p
+                            break
+                        if ("erelja" in norm_p and "erellja" in norm_c) or ("erellja" in norm_p and "erelja" in norm_c):
+                            matched_player = p
+                            break
+                    if matched_player:
+                        break
 
-            for p in all_players:
-                norm_p = normalize_name(p["name"])
-                for c in candidates:
-                    norm_c = normalize_name(c)
-                    if norm_p == norm_c or norm_p in norm_c or norm_c in norm_p:
-                        matched_player = p
-                        break
-                    # Special guild aliases
-                    if ("xak" in norm_p and "agravain" in norm_c) or ("agravain" in norm_p and "xak" in norm_c):
-                        matched_player = p
-                        break
-                    if ("fartlord" in norm_p and "tom" in norm_c) or ("tom" in norm_p and "fartlord" in norm_c):
-                        matched_player = p
-                        break
-                    if ("purpleman" in norm_p and "marsian" in norm_c) or ("marsian" in norm_p and "purpleman" in norm_c):
-                        matched_player = p
-                        break
-                    if ("brokest" in norm_p and "slavedemorto" in norm_c) or ("slavedemorto" in norm_p and "brokest" in norm_c):
-                        matched_player = p
-                        break
-                    if ("erelja" in norm_p and "erellja" in norm_c) or ("erellja" in norm_p and "erelja" in norm_c):
-                        matched_player = p
-                        break
-                if matched_player:
-                    break
+            player_id = matched_player["id"] if matched_player else None
+            if not known or known["player_id"] != player_id or known["faction"] != vote_faction:
+                conn.execute(
+                    "INSERT OR REPLACE INTO discord_voters (user_id, player_id, display_name, faction) VALUES (?, ?, ?, ?)",
+                    (uid, player_id, display_name, vote_faction),
+                )
+                changed = True
 
             if matched_player:
-                old_f = matched_player["faction"]
+                old_f = current_factions[player_id]
                 if vote_faction != old_f:
                     conn.execute(
                         """
                         INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details)
                         VALUES (?, ?, ?, ?, 'discord_sync', ?)
                         """,
-                        (matched_player["id"], matched_player["name"], old_f, vote_faction, f"Discord poll vote ({nick or gname or uname})"),
+                        (player_id, matched_player["name"], old_f, vote_faction, f"Discord poll vote ({display_name})"),
                     )
-                conn.execute(
-                    "UPDATE players SET faction = ? WHERE id = ?",
-                    (vote_faction, matched_player["id"]),
-                )
+                    conn.execute("UPDATE players SET faction = ? WHERE id = ?", (vote_faction, player_id))
+                    current_factions[player_id] = vote_faction
+                    changed = True
                 updated.append({
-                    "id": matched_player["id"],
+                    "id": player_id,
                     "name": matched_player["name"],
                     "old_faction": old_f,
                     "new_faction": vote_faction,
-                    "discord_nick": nick or gname or uname,
+                    "discord_nick": display_name,
                 })
             else:
                 unmatched.append({
                     "discord_id": uid,
-                    "name": nick or gname or uname,
+                    "name": display_name,
                     "faction": vote_faction,
                 })
 
-    sync_to_gcs()
+        # A previously observed voter who disappears from both answers withdrew their vote.
+        for uid, known in known_voters.items():
+            if uid in user_votes or known["faction"] == "Abstain":
+                continue
+            conn.execute("UPDATE discord_voters SET faction = 'Abstain' WHERE user_id = ?", (uid,))
+            changed = True
+            player = players_by_id.get(known["player_id"])
+            if player and current_factions[player["id"]] != "Abstain":
+                old_f = current_factions[player["id"]]
+                conn.execute(
+                    "INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details) VALUES (?, ?, ?, 'Abstain', 'discord_sync', ?)",
+                    (player["id"], player["name"], old_f, f"Discord poll vote removed ({known['display_name']})"),
+                )
+                conn.execute("UPDATE players SET faction = 'Abstain' WHERE id = ?", (player["id"],))
+                current_factions[player["id"]] = "Abstain"
+
+    conn.close()
+    if (changed or gcs_sync_pending) and not sync_to_gcs():
+        raise HTTPException(status_code=503, detail="Database backup to GCS failed")
 
     return {
         "status": "ok",
         "synced_count": len(updated),
+        "changed": changed,
         "updated": updated,
         "unmatched": unmatched,
         "horde_poll_votes": len(horde_users),
         "alliance_poll_votes": len(ally_users),
     }
+
+
+@app.post("/api/discord/sync")
+def sync_discord_votes(request: Request):
+    expected = os.environ.get("SYNC_TOKEN", "")
+    supplied = request.headers.get("X-Sync-Token", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="SYNC_TOKEN is not configured")
+    if not hmac.compare_digest(supplied, expected):
+        raise HTTPException(status_code=401, detail="Invalid sync token")
+    if not sync_lock.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="Sync already in progress")
+    try:
+        return _sync_discord_votes()
+    finally:
+        sync_lock.release()
 
 
 @app.get("/api/history")
@@ -598,6 +693,7 @@ def get_vote_history(limit: int = 200):
         "SELECT id, player_id, player_name, old_faction, new_faction, changed_by, timestamp, details FROM vote_history ORDER BY id DESC LIMIT ?",
         (limit,)
     ).fetchall()
+    conn.close()
     return [
         {
             "id": r["id"],

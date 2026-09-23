@@ -353,8 +353,6 @@
     </div>
     <div class="nav-links">
       <a href="/" class="nav-btn">🗳️ Election Map (Public)</a>
-      <a href="/admin" class="nav-btn">⚔️ Council Admin</a>
-      <button class="nav-btn primary" id="btn-sync" onclick="syncDiscord()">🤖 Sync Discord Poll</button>
       <button class="nav-btn" onclick="fetchHistory()">🔄 Refresh</button>
     </div>
   </div>
@@ -539,32 +537,6 @@ function renderHistoryTable() {
     `;
     tbody.appendChild(tr);
   });
-}
-
-async function syncDiscord() {
-  const btn = document.getElementById("btn-sync");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ Syncing...";
-  }
-  showToast("Fetching live votes from native Discord Poll in #sign-up-forever...");
-  try {
-    const res = await fetch("/api/discord/sync", { method: "POST" });
-    if (res.ok) {
-      const data = await res.json();
-      showToast(`✅ Synced ${data.synced_count} voters from Discord Poll (${data.horde_poll_votes} Horde, ${data.alliance_poll_votes} Alliance)!`);
-      fetchHistory();
-    } else {
-      showToast("❌ Discord poll sync failed.");
-    }
-  } catch (e) {
-    showToast("❌ Network error connecting to sync.");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "🤖 Sync Discord Poll";
-    }
-  }
 }
 
 function showToast(msg) {

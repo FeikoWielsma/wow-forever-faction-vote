@@ -7,4 +7,8 @@ __pycache__
 .venv
 venv
 *.xlsx
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
 .DS_Store

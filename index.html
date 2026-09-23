@@ -2873,7 +2873,12 @@ async function syncDiscordVotes() {
   }
   showToast("Fetching live votes from Discord poll in #sign-up-forever...");
   try {
-    const res = await fetch("/api/discord/sync", { method: "POST" });
+    const token = window.prompt("Enter the sync token to run a manual Discord sync:");
+    if (!token) return;
+    const res = await fetch("/api/discord/sync", {
+      method: "POST",
+      headers: { "X-Sync-Token": token }
+    });
     if (res.ok) {
       const data = await res.json();
       const allyCount = data.alliance_poll_votes ?? data.total_alliance_reactions ?? 0;
