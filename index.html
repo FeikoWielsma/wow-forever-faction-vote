@@ -4,51 +4,86 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WoW Forever (Classic+) Faction Vote Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --horde-red: #c0392b;
-    --horde-dark: #962d22;
-    --horde-bg: #fff5f5;
-    --horde-border: #fca5a5;
+    --horde-red: #dc2626;
+    --horde-bright: #f87171;
+    --horde-dark: #7f1d1d;
+    --horde-border: rgba(220, 38, 38, 0.4);
+    --horde-bg: rgba(69, 10, 10, 0.35);
+
     --alliance-blue: #2563eb;
-    --alliance-dark: #1d4ed8;
-    --alliance-bg: #eff6ff;
-    --alliance-border: #bfdbfe;
-    --abstain-gray: #64748b;
-    --abstain-bg: #f8fafc;
-    --abstain-border: #cbd5e1;
-    --gm-gold: #d97706;
-    --gm-bg: #fffbeb;
-    --gm-border: #fcd34d;
-    --border: #e2e8f0;
-    --card-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    --alliance-bright: #60a5fa;
+    --alliance-dark: #1e3a8a;
+    --alliance-border: rgba(37, 99, 235, 0.4);
+    --alliance-bg: rgba(23, 37, 84, 0.35);
+
+    --abstain-gray: #94a3b8;
+    --abstain-bg: rgba(30, 41, 59, 0.35);
+    --abstain-border: rgba(100, 116, 139, 0.35);
+
+    --wow-gold: #f59e0b;
+    --wow-gold-bright: #ffd100;
+    --wow-gold-dark: #b45309;
+    --gm-border: #b45309;
+
+    --border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #f1f5f9;
-    color: #1e293b;
-    padding: 24px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #07090e;
+    background-image: 
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(30, 58, 138, 0.22), transparent),
+      radial-gradient(ellipse 70% 40% at 100% 100%, rgba(153, 27, 27, 0.16), transparent),
+      linear-gradient(180deg, #0d121c 0%, #07090e 100%);
+    background-attachment: fixed;
+    color: #e2e8f0;
+    padding: 24px 16px;
     line-height: 1.5;
+    min-height: 100vh;
   }
   .container {
     max-width: 1320px;
     margin: 0 auto;
   }
   header {
-    background: white;
+    background: linear-gradient(180deg, #151d2c 0%, #0c121d 100%);
     padding: 20px 28px;
-    border-radius: 14px;
-    box-shadow: var(--card-shadow);
+    border-radius: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: var(--card-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
+    position: relative;
   }
-  h1 { font-size: 22px; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-  .subtitle { font-size: 13.5px; color: #64748b; margin-top: 2px; }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  }
+  h1 { 
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 23px; 
+    font-weight: 800;
+    color: #ffd100;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 16px rgba(245, 158, 11, 0.35);
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    letter-spacing: 0.8px;
+  }
+  .subtitle { font-size: 13px; color: #94a3b8; margin-top: 2px; }
 
   /* HEADER BUTTONS */
   .header-actions {
@@ -58,25 +93,59 @@
     flex-wrap: wrap;
   }
   .btn {
-    border: none;
+    border: 1px solid transparent;
     padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
   }
-  .btn-primary { background: #0f172a; color: white; }
-  .btn-primary:hover { background: #1e293b; }
-  .btn-success { background: #10b981; color: white; }
-  .btn-success:hover { background: #059669; }
-  .btn-outline { background: white; border: 1px solid var(--border); color: #475569; }
-  .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
-  .btn-gm { background: #d97706; color: white; }
-  .btn-gm:hover { background: #b45309; }
+  .btn-primary { 
+    background: linear-gradient(180deg, #25334a 0%, #151d2a 100%); 
+    border-color: #3b82f6; 
+    color: #93c5fd; 
+  }
+  .btn-primary:hover { 
+    background: linear-gradient(180deg, #324463 0%, #1a2436 100%); 
+    border-color: #60a5fa; 
+    color: #ffffff; 
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  }
+  .btn-success { 
+    background: linear-gradient(180deg, #059669 0%, #064e3b 100%); 
+    border-color: #34d399; 
+    color: #ffffff; 
+  }
+  .btn-success:hover { 
+    background: linear-gradient(180deg, #10b981 0%, #047857 100%); 
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+  .btn-outline { 
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
+    border-color: #475569; 
+    color: #cbd5e1; 
+  }
+  .btn-outline:hover { 
+    background: #334155; 
+    border-color: #94a3b8; 
+    color: #ffffff; 
+  }
+  .btn-gm { 
+    background: linear-gradient(180deg, #d97706 0%, #78350f 100%); 
+    border-color: #fbbf24; 
+    color: #fffbeb; 
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .btn-gm:hover { 
+    background: linear-gradient(180deg, #f59e0b 0%, #92400e 100%); 
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  }
 
   /* 4-CARD SCOREBOARD BANNER */
   .scoreboard {
@@ -89,27 +158,60 @@
     .scoreboard { grid-template-columns: 1fr 1fr; }
   }
   .score-card {
-    background: white;
+    background: linear-gradient(180deg, #131a29 0%, #0c101a 100%);
     padding: 18px 20px;
-    border-radius: 14px;
+    border-radius: 12px;
     box-shadow: var(--card-shadow);
     text-align: center;
-    border-top: 5px solid #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 4px solid #64748b;
     position: relative;
     overflow: hidden;
   }
-  .score-card.horde { border-color: var(--horde-red); background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%); }
-  .score-card.alliance { border-color: var(--alliance-blue); background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%); }
-  .score-card.abstain { border-color: var(--abstain-gray); background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); }
-  .score-card.winner { border-color: #10b981; background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%); }
+  .score-card.horde { 
+    border-top-color: #ef4444; 
+    border-color: rgba(239, 68, 68, 0.3);
+    background: linear-gradient(180deg, rgba(127, 29, 29, 0.35) 0%, #0d1017 100%);
+    box-shadow: var(--card-shadow), 0 0 20px rgba(220, 38, 38, 0.12);
+  }
+  .score-card.alliance { 
+    border-top-color: #3b82f6; 
+    border-color: rgba(59, 130, 246, 0.3);
+    background: linear-gradient(180deg, rgba(30, 58, 138, 0.35) 0%, #0d1017 100%);
+    box-shadow: var(--card-shadow), 0 0 20px rgba(37, 99, 235, 0.12);
+  }
+  .score-card.abstain { 
+    border-top-color: #64748b; 
+    border-color: rgba(148, 163, 184, 0.2);
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.3) 0%, #0d1017 100%);
+  }
+  .score-card.winner { 
+    border-top-color: var(--wow-gold); 
+    border-color: rgba(245, 158, 11, 0.35);
+    background: linear-gradient(180deg, rgba(217, 119, 6, 0.25) 0%, #0d1017 100%);
+    box-shadow: var(--card-shadow), 0 0 20px rgba(245, 158, 11, 0.15);
+  }
   
-  .card-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; }
-  .card-val { font-size: 38px; font-weight: 800; margin: 2px 0; line-height: 1.1; }
-  .score-card.horde .card-val { color: var(--horde-red); }
-  .score-card.alliance .card-val { color: var(--alliance-blue); }
-  .score-card.abstain .card-val { color: #475569; }
-  .score-card.winner .card-val { color: #059669; font-size: 24px; padding-top: 6px; }
-  .card-sub { font-size: 12.5px; color: #64748b; }
+  .card-label { 
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 12px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    color: #94a3b8; 
+  }
+  .card-val { 
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 42px; 
+    font-weight: 900; 
+    margin: 2px 0; 
+    line-height: 1.1; 
+  }
+  .score-card.horde .card-val { color: #fca5a5; text-shadow: 0 0 16px rgba(239, 68, 68, 0.5); }
+  .score-card.alliance .card-val { color: #93c5fd; text-shadow: 0 0 16px rgba(59, 130, 246, 0.5); }
+  .score-card.abstain .card-val { color: #cbd5e1; }
+  .score-card.winner .card-val { color: #ffd100; font-size: 26px; padding-top: 6px; text-shadow: 0 0 14px rgba(245, 158, 11, 0.5); }
+  .card-sub { font-size: 12.5px; color: #94a3b8; }
   
   .swing-alert {
     display: inline-block;
@@ -119,8 +221,8 @@
     padding: 2px 8px;
     border-radius: 10px;
   }
-  .swing-alert.critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-  .swing-alert.safe { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .swing-alert.critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .swing-alert.safe { background: rgba(16, 185, 129, 0.2); color: #86efac; border: 1px solid rgba(16, 185, 129, 0.4); }
 
   .vote-mode-badge {
     position: absolute;
@@ -130,18 +232,19 @@
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 10px;
-    background: #e2e8f0;
-    color: #475569;
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffd100;
+    border: 1px solid rgba(245, 158, 11, 0.25);
   }
 
   /* GM RIG-O-METER PANEL */
   .gm-panel {
-    background: var(--gm-bg);
-    border: 2px solid var(--gm-border);
-    border-radius: 14px;
-    padding: 20px 24px;
+    background: linear-gradient(180deg, #1c150c 0%, #110e08 100%);
+    border: 1.5px solid #b45309;
+    border-radius: 12px;
+    padding: 18px 22px;
     margin-bottom: 20px;
-    box-shadow: var(--card-shadow);
+    box-shadow: var(--card-shadow), 0 0 16px rgba(217, 119, 6, 0.1);
   }
   .gm-header {
     display: flex;
@@ -152,17 +255,17 @@
     margin-bottom: 14px;
   }
   .gm-title {
+    font-family: 'Cinzel', Georgia, serif;
     font-size: 17px;
     font-weight: 800;
-    color: #92400e;
+    color: #fbbf24;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: 0.5px;
   }
-  .gm-tagline {
-    font-size: 13px;
-    color: #b45309;
-  }
+  .gm-tagline { font-size: 13px; color: #d97706; }
   .gm-body {
     display: grid;
     grid-template-columns: 1.2fr 1fr;
@@ -172,29 +275,31 @@
     .gm-body { grid-template-columns: 1fr; }
   }
   .gm-stat-box {
-    background: white;
+    background: #151009;
     padding: 14px 18px;
-    border-radius: 10px;
-    border: 1px solid #fde68a;
+    border-radius: 8px;
+    border: 1px solid #78350f;
   }
   .gm-stat-title {
-    font-size: 11.5px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    color: #78350f;
+    color: #f59e0b;
     margin-bottom: 6px;
+    letter-spacing: 0.5px;
   }
   .gm-stat-value {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1e293b;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #fef3c7;
     line-height: 1.4;
   }
   .gm-actions-box {
-    background: white;
+    background: #151009;
     padding: 14px 18px;
-    border-radius: 10px;
-    border: 1px solid #fde68a;
+    border-radius: 8px;
+    border: 1px solid #78350f;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -209,23 +314,25 @@
     display: inline-block;
     padding: 3px 10px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-  .rig-gauge.guaranteed { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-  .rig-gauge.possible { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-  .rig-gauge.unlikely { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .rig-gauge.guaranteed { background: rgba(220, 38, 38, 0.3); color: #fca5a5; border: 1px solid #ef4444; }
+  .rig-gauge.possible { background: rgba(217, 119, 6, 0.3); color: #fde68a; border: 1px solid #f59e0b; }
+  .rig-gauge.unlikely { background: rgba(22, 101, 52, 0.3); color: #86efac; border: 1px solid #22c55e; }
 
   /* SIMULATION OUTPUT LOG */
   #sim-log-box {
     margin-top: 12px;
-    background: #0f172a;
+    background: #06090e;
     color: #38bdf8;
     font-family: monospace;
     font-size: 12px;
     padding: 12px 16px;
     border-radius: 8px;
+    border: 1px solid #1e293b;
     display: none;
     max-height: 140px;
     overflow-y: auto;
@@ -234,9 +341,10 @@
 
   /* CONTROLS BAR */
   .controls-panel {
-    background: white;
-    padding: 18px 24px;
-    border-radius: 14px;
+    background: linear-gradient(180deg, #151c2a 0%, #0d131f 100%);
+    padding: 16px 22px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: var(--card-shadow);
     margin-bottom: 20px;
   }
@@ -247,33 +355,34 @@
     flex-wrap: wrap;
     gap: 16px;
     padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .mode-switch-container {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #f1f5f9;
+    gap: 6px;
+    background: #090d14;
     padding: 4px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .mode-switch-btn {
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 13px;
+    padding: 7px 15px;
+    border-radius: 6px;
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: #64748b;
+    color: #94a3b8;
     background: transparent;
   }
   .mode-switch-btn.active {
-    background: white;
-    color: #0f172a;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    background: linear-gradient(180deg, #25334a 0%, #172130 100%);
+    color: #ffd100;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
   }
 
   .weights-section {
@@ -291,22 +400,22 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #f8fafc;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-  }
-  .weight-label { font-weight: 600; font-size: 13px; color: #334155; }
-  .weight-input {
-    width: 50px;
-    padding: 5px 6px;
-    border: 1px solid #cbd5e1;
+    background: #090d14;
+    padding: 5px 10px;
     border-radius: 6px;
-    font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .weight-label { font-weight: 600; font-size: 12.5px; color: #cbd5e1; }
+  .weight-input {
+    width: 46px;
+    padding: 4px 6px;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    font-size: 14px;
     font-weight: 700;
     text-align: center;
-    color: #0f172a;
-    background: white;
+    color: #ffd100;
+    background: #161e2e;
   }
 
   /* SEARCH & PRESETS BAR */
@@ -325,21 +434,22 @@
     align-items: center;
   }
   .preset-btn {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    padding: 5px 12px;
+    background: #090d14;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 11px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    color: #475569;
+    color: #94a3b8;
   }
-  .preset-btn:hover { background: #e2e8f0; color: #0f172a; }
+  .preset-btn:hover { background: #1e293b; color: #f1f5f9; border-color: #64748b; }
   .preset-btn.active {
-    background: #0f172a;
-    color: white;
-    border-color: #0f172a;
+    background: linear-gradient(180deg, #25334a 0%, #151e2b 100%);
+    color: #ffd100;
+    border-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
   }
 
   .search-filter-box {
@@ -349,19 +459,22 @@
   }
   .search-input {
     padding: 6px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #334155;
     border-radius: 6px;
     font-size: 13px;
     width: 180px;
+    background: #090d14;
+    color: #f1f5f9;
   }
+  .search-input::placeholder { color: #64748b; }
   .filter-select {
-    padding: 6px 10px;
-    border: 1px solid #cbd5e1;
+    padding: 5px 10px;
+    border: 1px solid #334155;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    background: white;
-    color: #334155;
+    background: #161e2e;
+    color: #e2e8f0;
   }
 
   /* 2-COLUMN LAYOUT & COMPACT TABLES */
@@ -381,82 +494,110 @@
     flex-direction: column;
   }
   .col-header {
-    background: white;
     padding: 10px 14px;
     border-radius: 10px 10px 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 3.5px solid transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
     box-shadow: var(--card-shadow);
   }
   .col-header.alliance-hdr {
-    border-top-color: var(--alliance-blue);
-    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+    border-top: 3.5px solid #3b82f6;
+    border-left: 1px solid rgba(59, 130, 246, 0.35);
+    border-right: 1px solid rgba(59, 130, 246, 0.35);
+    background: linear-gradient(90deg, #172554 0%, #1e3a8a 50%, #0d121d 100%);
   }
   .col-header.horde-hdr {
-    border-top-color: var(--horde-red);
-    background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+    border-top: 3.5px solid #ef4444;
+    border-left: 1px solid rgba(239, 68, 68, 0.35);
+    border-right: 1px solid rgba(239, 68, 68, 0.35);
+    background: linear-gradient(90deg, #450a0a 0%, #7f1d1d 50%, #0d1017 100%);
   }
   .col-header.abstain-hdr {
-    border-top-color: var(--abstain-gray);
-    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    border-top: 3.5px solid #64748b;
+    border-left: 1px solid rgba(100, 116, 139, 0.3);
+    border-right: 1px solid rgba(100, 116, 139, 0.3);
+    background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #0b0e14 100%);
   }
   .col-title {
-    font-size: 14.5px;
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 15px;
     font-weight: 800;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #0f172a;
+    letter-spacing: 0.6px;
   }
+  .alliance-hdr .col-title { color: #93c5fd; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+  .horde-hdr .col-title { color: #fca5a5; text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+  .abstain-hdr .col-title { color: #cbd5e1; }
   .col-count {
+    font-family: 'Inter', sans-serif;
     font-size: 11.5px;
     font-weight: 600;
-    color: #64748b;
-    background: #f1f5f9;
+    color: #94a3b8;
+    background: rgba(0, 0, 0, 0.4);
     padding: 2px 7px;
     border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .col-score {
-    font-size: 13.5px;
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 14.5px;
     font-weight: 800;
+    letter-spacing: 0.5px;
   }
-  .alliance-hdr .col-score { color: var(--alliance-blue); }
-  .horde-hdr .col-score { color: var(--horde-red); }
-  .abstain-hdr .col-score { color: var(--abstain-gray); }
+  .alliance-hdr .col-score { color: #60a5fa; text-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+  .horde-hdr .col-score { color: #f87171; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+  .abstain-hdr .col-score { color: #cbd5e1; }
 
   .table-container.compact {
-    background: white;
+    background: #0b0e14;
     border-radius: 0 0 10px 10px;
     box-shadow: var(--card-shadow);
     overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
   }
+  .alliance-col .table-container.compact {
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+  .horde-col .table-container.compact {
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+  .abstain-section .table-container.compact {
+    border-color: rgba(100, 116, 139, 0.3);
+  }
+
   .roster-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
   }
   .roster-table th {
-    background: #0f172a;
-    color: white;
-    text-align: left;
+    background: #080b11;
+    color: #ffd100;
+    font-family: 'Cinzel', serif;
     padding: 7px 8px;
     font-weight: 700;
     font-size: 11px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     user-select: none;
   }
   .roster-table th.center, .roster-table td.center { text-align: center; }
   .roster-table td {
     padding: 5px 8px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     vertical-align: middle;
     line-height: 1.25;
+    color: #e2e8f0;
   }
-  .alliance-table tr:hover { background: #eff6ff; }
-  .horde-table tr:hover { background: #fff5f5; }
-  .abstain-table tr:hover { background: #f8fafc; }
+  .alliance-table tr:hover { background: rgba(30, 58, 138, 0.2); }
+  .horde-table tr:hover { background: rgba(153, 27, 27, 0.2); }
+  .abstain-table tr:hover { background: rgba(51, 65, 85, 0.2); }
 
   /* NAME CELL & INLINE EDITING */
   .name-cell {
@@ -467,9 +608,9 @@
   }
   .name-text {
     font-weight: 700;
-    color: #0f172a;
+    color: #f1f5f9;
     cursor: pointer;
-    border-bottom: 1px dashed #cbd5e1;
+    border-bottom: 1px dashed #475569;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -477,8 +618,8 @@
     max-width: 130px;
   }
   .name-text:hover {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: #ffd100;
+    border-bottom-color: #ffd100;
   }
   .btn-edit-name {
     opacity: 0;
@@ -487,21 +628,23 @@
     cursor: pointer;
     font-size: 11px;
     padding: 1px 3px;
-    color: #94a3b8;
+    color: #64748b;
     border-radius: 3px;
   }
   .roster-table tr:hover .btn-edit-name {
     opacity: 1;
   }
   .btn-edit-name:hover {
-    color: #0f172a;
-    background: #e2e8f0;
+    color: #ffd100;
+    background: #334155;
   }
   .name-edit-input {
     font-size: 12.5px;
     font-weight: 700;
     padding: 2px 6px;
-    border: 1.5px solid #2563eb;
+    border: 1.5px solid #ffd100;
+    background: #090d14;
+    color: #f1f5f9;
     border-radius: 4px;
     outline: none;
     width: 120px;
@@ -514,12 +657,12 @@
     font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
-    border: 1px solid var(--border);
-    background: white;
+    background: #0f172a;
+    border: 1px solid #334155;
   }
-  .compact-faction-select.alliance { color: var(--alliance-blue); background: #eff6ff; border-color: #bfdbfe; }
-  .compact-faction-select.horde { color: var(--horde-red); background: #fff5f5; border-color: #fca5a5; }
-  .compact-faction-select.abstain { color: var(--abstain-gray); background: #f8fafc; border-color: #cbd5e1; }
+  .compact-faction-select.alliance { color: #60a5fa; background: #0c1830; border-color: #1e40af; }
+  .compact-faction-select.horde { color: #f87171; background: #260c0c; border-color: #991b1b; }
+  .compact-faction-select.abstain { color: #94a3b8; background: #131924; border-color: #475569; }
 
   /* DELETE BUTTON */
   .btn-del {
@@ -527,7 +670,7 @@
     border: none;
     font-size: 13px;
     cursor: pointer;
-    color: #cbd5e1;
+    color: #475569;
     padding: 2px 5px;
     border-radius: 4px;
     transition: all 0.15s ease;
@@ -535,7 +678,7 @@
   }
   .btn-del:hover {
     color: #ef4444;
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.15);
   }
 
   /* CHECKBOX STYLING */
@@ -547,28 +690,32 @@
     vertical-align: middle;
   }
   .player-score {
+    font-family: 'Cinzel', serif;
     font-weight: 800;
-    font-size: 13.5px;
+    font-size: 14px;
+    color: #f1f5f9;
   }
   .player-score.abstaining {
-    color: #94a3b8;
+    font-family: 'Inter', sans-serif;
+    color: #64748b;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11.5px;
   }
 
   /* ADD PLAYER PANEL */
   .add-player-panel {
-    background: white;
-    padding: 12px 18px;
-    border-radius: 12px;
-    border: 1px solid #cbd5e1;
+    background: linear-gradient(180deg, #151c2a 0%, #0d131f 100%);
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
     box-shadow: var(--card-shadow);
     margin-bottom: 16px;
   }
   .add-form-title {
-    font-size: 13px;
+    font-family: 'Cinzel', serif;
+    font-size: 13.5px;
     font-weight: 800;
-    color: #0f172a;
+    color: #ffd100;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -582,83 +729,174 @@
   }
   .add-input {
     padding: 6px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #334155;
     border-radius: 6px;
     font-size: 13px;
+    background: #090d14;
+    color: #f1f5f9;
     min-width: 180px;
     flex: 1;
   }
+  .add-input::placeholder { color: #64748b; }
   .era-check-label {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     font-size: 12px;
     font-weight: 600;
-    color: #334155;
+    color: #cbd5e1;
     cursor: pointer;
-    background: #f8fafc;
+    background: #090d14;
     padding: 5px 9px;
     border-radius: 6px;
-    border: 1px solid var(--border);
+    border: 1px solid #334155;
   }
   .era-check-label:hover {
-    background: #f1f5f9;
+    background: #161e2e;
+    border-color: #64748b;
   }
 
   /* MODAL */
   .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 2000;
   }
   .modal-card {
-    background: white;
+    background: linear-gradient(180deg, #182030 0%, #0e1422 100%);
+    border: 2px solid #b45309;
     padding: 28px 32px;
-    border-radius: 16px;
+    border-radius: 14px;
     max-width: 480px;
     width: 90%;
     text-align: center;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 20px rgba(245, 158, 11, 0.25);
+    color: #f1f5f9;
   }
   .modal-icon { font-size: 48px; margin-bottom: 12px; }
-  .modal-title { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
-  .modal-body { font-size: 14px; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+  .modal-title { 
+    font-family: 'Cinzel', serif;
+    font-size: 20px; 
+    font-weight: 800; 
+    color: #ffd100; 
+    margin-bottom: 8px; 
+  }
+  .modal-body { font-size: 14px; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5; }
 
   /* TOAST ALERT */
   #toast {
     position: fixed;
     bottom: 24px;
     right: 24px;
-    background: #0f172a;
-    color: white;
+    background: #182030;
+    border: 1px solid #b45309;
+    color: #ffd100;
     padding: 12px 20px;
     border-radius: 8px;
     font-size: 13.5px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     display: none;
     z-index: 1000;
+  }
+  /* ADMIN VS SAFE MODE */
+  body:not(.is-admin) .admin-only {
+    display: none !important;
+  }
+  body.is-admin .safe-only {
+    display: none !important;
+  }
+  .admin-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: linear-gradient(180deg, #2a160d 0%, #150d08 100%);
+    border: 1px solid #b45309;
+    border-left: 4px solid #f59e0b;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 16px rgba(245, 158, 11, 0.15);
+  }
+  .admin-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .admin-badge {
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffd100;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    letter-spacing: 0.5px;
+  }
+  .admin-desc {
+    font-size: 12.5px;
+    color: #fde68a;
+  }
+  .admin-bar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .safe-view-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+  .name-text-safe {
+    font-weight: 600;
+    color: #f1f5f9;
   }
 </style>
 </head>
 <body>
 
 <div class="container">
+  <!-- ADMIN MANAGEMENT TOP BAR -->
+  <div class="admin-top-bar admin-only">
+    <div class="admin-bar-info">
+      <span class="admin-badge">⚔️ COUNCIL / ROSTER ADMIN MODE</span>
+      <span class="admin-desc">You are on the management URL. You can edit names, add/remove members, toggle eras, and move factions.</span>
+    </div>
+    <div class="admin-bar-actions">
+      <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="copyPublicLink()">📋 Copy Public Safe Link</button>
+      <a href="/" target="_blank" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">👁️ Open Safe View</a>
+    </div>
+  </div>
+
   <header>
     <div>
       <h1>⚔️ WoW Forever (Classic+) Faction Decision Tool</h1>
-      <div class="subtitle">Live voting simulator: toggle faction per person, test GM poll closing strategy, switch between Weighted & 1-Vote modes.</div>
+      <div class="subtitle">Live voting simulator: real-time scoreboard & guild roster analysis.</div>
     </div>
     <div class="header-actions">
+      <div class="safe-view-badge safe-only">
+        <span>🛡️ Public Live View (Read-Only)</span>
+      </div>
       <div id="db-status-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #065f46;">
         <span id="db-status-dot" style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
         <span id="db-status-text">Connecting to SQLite...</span>
       </div>
-      <button class="btn btn-outline" onclick="resetToDefaults()">🔄 Reset Roster</button>
       <button class="btn btn-success" onclick="copyTSV()">📋 Copy for Google Sheets</button>
     </div>
   </header>
@@ -719,8 +957,8 @@
         </div>
       </div>
 
-      <!-- Interactive GM Controls -->
-      <div class="gm-actions-box">
+      <!-- Interactive GM Controls (Admin Only) -->
+      <div class="gm-actions-box admin-only">
         <div>
           <div class="gm-stat-title">Simulate GM Actions</div>
           <div style="font-size: 12.5px; color: #475569; margin-bottom: 8px;">
@@ -756,23 +994,23 @@
           Voting System Mode:
         </div>
         <div class="mode-switch-container">
-          <button id="btn-mode-weighted" class="mode-switch-btn active" onclick="setVotingMode('weighted')">
+          <button id="btn-mode-weighted" class="mode-switch-btn" onclick="setVotingMode('weighted')">
             ⚖️ Era-Weighted Mode
           </button>
-          <button id="btn-mode-onevote" class="mode-switch-btn" onclick="setVotingMode('onevote')">
+          <button id="btn-mode-onevote" class="mode-switch-btn active" onclick="setVotingMode('onevote')">
             👤 1 Vote Per Person Mode
           </button>
         </div>
       </div>
 
-      <div id="weights-container" class="weights-section">
+      <div id="weights-container" class="weights-section disabled">
         <div class="weight-group">
           <span class="weight-label">Classic:</span>
-          <input type="number" id="w-classic" class="weight-input" value="2" min="0" max="10" oninput="onWeightInput()">
+          <input type="number" id="w-classic" class="weight-input" value="1" min="0" max="10" oninput="onWeightInput()">
         </div>
         <div class="weight-group">
           <span class="weight-label">SoD:</span>
-          <input type="number" id="w-sod" class="weight-input" value="3" min="0" max="10" oninput="onWeightInput()">
+          <input type="number" id="w-sod" class="weight-input" value="1" min="0" max="10" oninput="onWeightInput()">
         </div>
         <div class="weight-group">
           <span class="weight-label">Retail:</span>
@@ -783,24 +1021,24 @@
 
     <!-- Bottom Row: Presets & Filters -->
     <div class="controls-row-bottom">
-      <div class="presets-bar" id="presets-bar">
+      <div class="presets-bar admin-only" id="presets-bar" style="opacity: 0.35; pointer-events: none;">
         <span style="font-size: 12px; font-weight: 700; color: #64748b; margin-right: 4px;">Presets:</span>
-        <button class="preset-btn active" onclick="applyPreset(2, 3, 1, this)">Classic+ Focus (2:3:1)</button>
+        <button class="preset-btn" onclick="applyPreset(2, 3, 1, this)">Classic+ Focus (2:3:1)</button>
         <button class="preset-btn" onclick="applyPreset(3, 2, 1, this)">Seniority / Loyalty (3:2:1)</button>
         <button class="preset-btn" onclick="applyPreset(1, 2, 3, this)">Recency / Current (1:2:3)</button>
-        <button class="preset-btn" onclick="applyPreset(1, 1, 1, this)">Flat (1:1:1)</button>
+        <button class="preset-btn active" onclick="applyPreset(1, 1, 1, this)">Flat (1:1:1)</button>
         <button class="preset-btn" onclick="applyPreset(2, 2, 1, this)">Classic & SoD Equal (2:2:1)</button>
       </div>
 
       <div class="search-filter-box">
         <input type="text" id="search-box" class="search-input" placeholder="🔍 Search player..." oninput="renderTable()">
-        <button class="btn btn-primary" onclick="toggleAddPlayerPanel()">➕ Add Player</button>
+        <button class="btn btn-primary admin-only" onclick="toggleAddPlayerPanel()">➕ Add Player</button>
       </div>
     </div>
   </div>
 
   <!-- ADD PLAYER COLLAPSIBLE PANEL -->
-  <div id="add-player-panel" class="add-player-panel" style="display: none;">
+  <div id="add-player-panel" class="add-player-panel admin-only" style="display: none;">
     <div class="add-form-title">➕ Add New Guild Member</div>
     <div class="add-form-row">
       <input type="text" id="new-player-name" class="add-input" placeholder="Player or Discord name..." onkeydown="if(event.key==='Enter') submitAddPlayer()">
@@ -838,8 +1076,8 @@
               <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
               <th class="center" style="width: 26px;" title="Retail">R</th>
               <th class="center" style="width: 38px;">Pts</th>
-              <th class="center" style="width: 80px;">Move</th>
-              <th class="center" style="width: 22px;"></th>
+              <th class="center admin-only" style="width: 80px;">Move</th>
+              <th class="center admin-only" style="width: 22px;"></th>
             </tr>
           </thead>
           <tbody id="alliance-tbody"></tbody>
@@ -866,8 +1104,8 @@
               <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
               <th class="center" style="width: 26px;" title="Retail">R</th>
               <th class="center" style="width: 38px;">Pts</th>
-              <th class="center" style="width: 80px;">Move</th>
-              <th class="center" style="width: 22px;"></th>
+              <th class="center admin-only" style="width: 80px;">Move</th>
+              <th class="center admin-only" style="width: 22px;"></th>
             </tr>
           </thead>
           <tbody id="horde-tbody"></tbody>
@@ -895,8 +1133,8 @@
             <th class="center" style="width: 26px;" title="Season of Discovery">S</th>
             <th class="center" style="width: 26px;" title="Retail">R</th>
             <th class="center" style="width: 50px;">Potential</th>
-            <th class="center" style="width: 100px;">Assign Faction</th>
-            <th class="center" style="width: 22px;"></th>
+            <th class="center admin-only" style="width: 100px;">Assign Faction</th>
+            <th class="center admin-only" style="width: 22px;"></th>
           </tr>
         </thead>
         <tbody id="abstain-tbody"></tbody>
@@ -968,8 +1206,16 @@ const DEFAULT_PLAYERS = [
   { id: 42, name: "noxqs", faction: "Alliance", c: false, s: true, r: false }
 ];
 
+const isAdmin = window.location.pathname.startsWith("/admin") || 
+                window.location.pathname.startsWith("/manage") || 
+                new URLSearchParams(window.location.search).has("admin");
+
+if (isAdmin) {
+  document.body.classList.add("is-admin");
+}
+
 let players = [];
-let votingMode = "weighted"; // 'weighted' or 'onevote'
+let votingMode = "onevote"; // 'weighted' or 'onevote'
 let isBackendConnected = false;
 let debounceSettingsTimeout = null;
 
@@ -1036,6 +1282,7 @@ function updateStatusBadge(text, state) {
 }
 
 async function setVotingMode(mode) {
+  if (!isAdmin) return;
   votingMode = mode;
   updateModeUI();
   renderTable();
@@ -1063,6 +1310,12 @@ function updateModeUI() {
     document.getElementById("badge-horde-mode").textContent = "Weighted Mode";
     document.getElementById("badge-alliance-mode").textContent = "Weighted Mode";
   }
+
+  if (!isAdmin) {
+    document.getElementById("btn-mode-weighted").style.pointerEvents = "none";
+    document.getElementById("btn-mode-onevote").style.pointerEvents = "none";
+    document.querySelectorAll(".weight-input").forEach(i => i.disabled = true);
+  }
 }
 
 let editingPlayerId = null;
@@ -1073,6 +1326,7 @@ function escapeHtml(str) {
 }
 
 function startEditName(id) {
+  if (!isAdmin) return;
   editingPlayerId = id;
   renderTable();
   const input = document.getElementById(`edit_input_${id}`);
@@ -1092,6 +1346,7 @@ function handleNameKey(event, id, input) {
 }
 
 async function savePlayerName(id, newName) {
+  if (!isAdmin) return;
   const cleanName = (newName || "").trim();
   const p = players.find(x => x.id === id);
   if (!p) {
@@ -1113,6 +1368,7 @@ async function savePlayerName(id, newName) {
 }
 
 function toggleAddPlayerPanel(show) {
+  if (!isAdmin) return;
   const panel = document.getElementById("add-player-panel");
   if (!panel) return;
   const shouldShow = show !== undefined ? show : (panel.style.display === "none");
@@ -1124,6 +1380,7 @@ function toggleAddPlayerPanel(show) {
 }
 
 async function submitAddPlayer() {
+  if (!isAdmin) return;
   const nameInput = document.getElementById("new-player-name");
   const factionSelect = document.getElementById("new-player-faction");
   const cCheck = document.getElementById("new-player-c");
@@ -1188,6 +1445,7 @@ async function submitAddPlayer() {
 }
 
 async function removePlayer(id) {
+  if (!isAdmin) return;
   const p = players.find(x => x.id === id);
   if (!p) return;
   if (!confirm(`Remove "${p.name}" from the voting roster?`)) return;
@@ -1236,16 +1494,23 @@ function renderTable() {
     const tr = document.createElement("tr");
 
     let nameHtml = "";
-    if (isEditing) {
+    if (isAdmin && isEditing) {
       nameHtml = `<input type="text" class="name-edit-input" id="edit_input_${p.id}" value="${escapeHtml(p.name)}" 
         onkeydown="handleNameKey(event, ${p.id}, this)" 
         onblur="savePlayerName(${p.id}, this.value)">`;
-    } else {
+    } else if (isAdmin) {
       nameHtml = `
         <div class="name-cell">
           <span class="name-text" title="Click to rename" onclick="startEditName(${p.id})">${escapeHtml(p.name)}</span>
-          ${p.isSodam ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 800;">GM</span>' : ''}
+          ${p.isSodam ? '<span style="font-size: 10px; background: rgba(245, 158, 11, 0.2); color: #ffd100; border: 1px solid rgba(245, 158, 11, 0.4); padding: 1px 4px; border-radius: 4px; font-weight: 800;">GM</span>' : ''}
           <button class="btn-edit-name" title="Rename" onclick="startEditName(${p.id})">✏️</button>
+        </div>
+      `;
+    } else {
+      nameHtml = `
+        <div class="name-cell">
+          <span class="name-text-safe">${escapeHtml(p.name)}</span>
+          ${p.isSodam ? '<span style="font-size: 10px; background: rgba(245, 158, 11, 0.2); color: #ffd100; border: 1px solid rgba(245, 158, 11, 0.4); padding: 1px 4px; border-radius: 4px; font-weight: 800;">GM</span>' : ''}
         </div>
       `;
     }
@@ -1258,15 +1523,22 @@ function renderTable() {
       </select>
     `;
 
+    const checkboxC = `<td class="center"><input type="checkbox" ${p.c ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 'c', this.checked)"` : 'disabled'}></td>`;
+    const checkboxS = `<td class="center"><input type="checkbox" ${p.s ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 's', this.checked)"` : 'disabled'}></td>`;
+    const checkboxR = `<td class="center"><input type="checkbox" ${p.r ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 'r', this.checked)"` : 'disabled'}></td>`;
+
+    const adminMoveTd = isAdmin ? `<td class="center">${factionSelectHtml}</td>` : '';
+    const adminDelTd = isAdmin ? `<td class="center"><button class="btn-del" title="Remove player" onclick="removePlayer(${p.id})">✕</button></td>` : '';
+
     tr.innerHTML = `
       <td style="color: #94a3b8; font-size: 11px;">${idx + 1}</td>
       <td>${nameHtml}</td>
-      <td class="center"><input type="checkbox" ${p.c ? 'checked' : ''} onchange="toggleBox(${p.id}, 'c', this.checked)"></td>
-      <td class="center"><input type="checkbox" ${p.s ? 'checked' : ''} onchange="toggleBox(${p.id}, 's', this.checked)"></td>
-      <td class="center"><input type="checkbox" ${p.r ? 'checked' : ''} onchange="toggleBox(${p.id}, 'r', this.checked)"></td>
+      ${checkboxC}
+      ${checkboxS}
+      ${checkboxR}
       <td class="center player-score ${p.faction === 'Abstain' ? 'abstaining' : ''}" id="score_${p.id}">0</td>
-      <td class="center">${factionSelectHtml}</td>
-      <td class="center"><button class="btn-del" title="Remove player" onclick="removePlayer(${p.id})">✕</button></td>
+      ${adminMoveTd}
+      ${adminDelTd}
     `;
     return tr;
   }
@@ -1275,18 +1547,20 @@ function renderTable() {
   hordeList.forEach((p, idx) => hTbody.appendChild(buildRow(p, idx)));
   abstainList.forEach((p, idx) => absTbody.appendChild(buildRow(p, idx)));
 
+  const colSpan = isAdmin ? 8 : 6;
   if (allianceList.length === 0) {
-    aTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Alliance voters matching filter</td></tr>`;
+    aTbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Alliance voters matching filter</td></tr>`;
   }
   if (hordeList.length === 0) {
-    hTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Horde voters matching filter</td></tr>`;
+    hTbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No Horde voters matching filter</td></tr>`;
   }
   if (abstainList.length === 0) {
-    absTbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No abstaining players matching filter</td></tr>`;
+    absTbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color:#94a3b8; padding: 12px; font-size: 12px;">No abstaining players matching filter</td></tr>`;
   }
 }
 
 async function changeFaction(id, newFaction) {
+  if (!isAdmin) return;
   const p = players.find(x => x.id === id);
   if (p) {
     p.faction = newFaction;
@@ -1297,6 +1571,7 @@ async function changeFaction(id, newFaction) {
 }
 
 async function toggleBox(id, era, isChecked) {
+  if (!isAdmin) return;
   const p = players.find(x => x.id === id);
   if (p) {
     p[era] = isChecked;
@@ -1322,6 +1597,7 @@ async function syncPlayerToDb(id, patchData) {
 }
 
 async function applyPreset(wc, ws, wr, btn) {
+  if (!isAdmin) return;
   if (votingMode === "onevote") setVotingMode("weighted");
   document.getElementById("w-classic").value = wc;
   document.getElementById("w-sod").value = ws;
@@ -1333,6 +1609,7 @@ async function applyPreset(wc, ws, wr, btn) {
 }
 
 function onWeightInput() {
+  if (!isAdmin) return;
   recalc();
   if (debounceSettingsTimeout) clearTimeout(debounceSettingsTimeout);
   debounceSettingsTimeout = setTimeout(() => {
@@ -1555,6 +1832,7 @@ function recalc() {
 }
 
 function closePollNow() {
+  if (!isAdmin) return;
   const winnerText = document.getElementById("winner-badge").textContent;
   const marginText = document.getElementById("margin-text").textContent;
   const modal = document.getElementById("poll-modal");
@@ -1584,6 +1862,7 @@ function closeModal() {
 }
 
 function simulateRandomClose() {
+  if (!isAdmin) return;
   const logBox = document.getElementById("sim-log-box");
   logBox.style.display = "block";
   logBox.innerHTML = "⏳ Running Monte Carlo simulation of 25 timeline steps with fluctuating voter swaps...\n";
@@ -1625,36 +1904,11 @@ function simulateRandomClose() {
   }, 200);
 }
 
-async function resetToDefaults() {
-  if (confirm("Reset all player votes, checkboxes, and weights to canonical defaults in SQLite?")) {
-    updateStatusBadge("Resetting DB...", "saving");
-    try {
-      if (isBackendConnected) {
-        await fetch("/api/reset", { method: "POST" });
-        const res = await fetch("/api/state");
-        const data = await res.json();
-        players = data.players;
-      } else {
-        players = JSON.parse(JSON.stringify(DEFAULT_PLAYERS));
-      }
-    } catch (err) {
-      players = JSON.parse(JSON.stringify(DEFAULT_PLAYERS));
-    }
-    votingMode = "weighted";
-    document.getElementById("w-classic").value = 2;
-    document.getElementById("w-sod").value = 3;
-    document.getElementById("w-retail").value = 1;
-    document.getElementById("search-box").value = "";
-    document.getElementById("filter-faction").value = "all";
-    document.getElementById("sim-log-box").style.display = "none";
-    updateModeUI();
-    renderTable();
-    recalc();
-    if (isBackendConnected) {
-      updateStatusBadge("SQLite DB (wow_vote.db)", "connected");
-    }
-    showToast("Roster reset to canonical defaults in SQLite!");
-  }
+function copyPublicLink() {
+  const publicUrl = window.location.origin + "/";
+  navigator.clipboard.writeText(publicUrl).then(() => {
+    showToast("📋 Copied Public Safe View URL to clipboard!");
+  });
 }
 
 function copyTSV() {

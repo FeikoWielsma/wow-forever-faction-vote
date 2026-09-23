@@ -62,10 +62,10 @@ DEFAULT_PLAYERS = [
 ]
 
 DEFAULT_SETTINGS = {
-    "w_classic": "2",
-    "w_sod": "3",
+    "w_classic": "1",
+    "w_sod": "1",
     "w_retail": "1",
-    "voting_mode": "weighted",
+    "voting_mode": "onevote",
 }
 
 
@@ -212,6 +212,8 @@ class SettingsUpdate(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/admin", response_class=HTMLResponse)
+@app.get("/manage", response_class=HTMLResponse)
 def serve_home():
     if not HTML_PATH.exists():
         raise HTTPException(status_code=404, detail="index.html not found")
@@ -240,10 +242,10 @@ def get_state():
 
     settings = {r["key"]: r["value"] for r in s_rows}
     settings_out = {
-        "w_classic": float(settings.get("w_classic", 2)),
-        "w_sod": float(settings.get("w_sod", 3)),
+        "w_classic": float(settings.get("w_classic", 1)),
+        "w_sod": float(settings.get("w_sod", 1)),
         "w_retail": float(settings.get("w_retail", 1)),
-        "voting_mode": settings.get("voting_mode", "weighted"),
+        "voting_mode": settings.get("voting_mode", "onevote"),
     }
 
     return {"players": players, "settings": settings_out}
@@ -378,33 +380,7 @@ def update_settings(update: SettingsUpdate):
 
 @app.post("/api/reset")
 def reset_database():
-    conn = get_db()
-    with conn:
-        conn.execute("DELETE FROM players")
-        for p in DEFAULT_PLAYERS:
-            conn.execute(
-                """
-                INSERT INTO players (id, name, faction, classic, sod, retail, is_sodam)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    p["id"],
-                    p["name"],
-                    p["faction"],
-                    1 if p["c"] else 0,
-                    1 if p["s"] else 0,
-                    1 if p["r"] else 0,
-                    1 if p["is_sodam"] else 0,
-                ),
-            )
-
-        conn.execute("DELETE FROM settings")
-        for k, v in DEFAULT_SETTINGS.items():
-            conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (k, v))
-
-    sync_to_gcs()
-
-    return {"status": "reset_successful"}
+    raise HTTPException(status_code=403, detail="Reset roster has been permanently disabled.")
 
 
 if __name__ == "__main__":
