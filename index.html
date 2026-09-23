@@ -237,107 +237,377 @@
     border: 1px solid rgba(245, 158, 11, 0.25);
   }
 
-  /* GM RIG-O-METER PANEL */
-  .gm-panel {
-    background: linear-gradient(180deg, #1c150c 0%, #110e08 100%);
+  /* =========================================================
+     USA-STYLE AZEROTH ELECTION NIGHT MAP & BATTLEGROUND SYSTEM
+     ========================================================= */
+  .election-map-panel {
+    background: linear-gradient(180deg, #121824 0%, #0a0e16 100%);
     border: 1.5px solid #b45309;
     border-radius: 12px;
-    padding: 18px 22px;
-    margin-bottom: 20px;
-    box-shadow: var(--card-shadow), 0 0 16px rgba(217, 119, 6, 0.1);
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--card-shadow), 0 0 24px rgba(245, 158, 11, 0.12);
+    position: relative;
   }
-  .gm-header {
+  .map-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
-  .gm-title {
+  .map-panel-title {
     font-family: 'Cinzel', Georgia, serif;
-    font-size: 17px;
-    font-weight: 800;
-    color: #fbbf24;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffd100;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: 0.6px;
+  }
+  .map-panel-sub { font-size: 12.5px; color: #94a3b8; }
+  
+  .election-ticker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #06090e;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #f1f5f9;
+    max-width: 500px;
+  }
+  .ticker-badge {
+    background: #dc2626;
+    color: #fff;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
+    animation: ticker-flash 2s infinite;
   }
-  .gm-tagline { font-size: 13px; color: #d97706; }
-  .gm-body {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 18px;
+  @keyframes ticker-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
-  @media (max-width: 860px) {
-    .gm-body { grid-template-columns: 1fr; }
+  .ticker-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #cbd5e1;
   }
-  .gm-stat-box {
-    background: #151009;
+
+  /* 270toWin Segmented Progress Bar */
+  .electoral-bar-container {
+    background: #070a10;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     padding: 14px 18px;
-    border-radius: 8px;
-    border: 1px solid #78350f;
+    margin-bottom: 20px;
   }
-  .gm-stat-title {
+  .electoral-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .ev-total {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .ev-total.alliance .ev-name { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 800; color: #93c5fd; }
+  .ev-total.alliance .ev-num { font-family: 'Cinzel', serif; font-size: 32px; font-weight: 900; color: #60a5fa; text-shadow: 0 0 12px rgba(59, 130, 246, 0.5); }
+  .ev-total.horde .ev-name { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 800; color: #fca5a5; }
+  .ev-total.horde .ev-num { font-family: 'Cinzel', serif; font-size: 32px; font-weight: 900; color: #f87171; text-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+  .ev-target-center { text-align: center; }
+  .ev-target-label { font-size: 10.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
+  .ev-target-val { font-family: 'Cinzel', serif; font-size: 14px; font-weight: 800; color: #ffd100; }
+  
+  .electoral-bar-track {
+    height: 24px;
+    background: #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .ev-seg {
+    height: 100%;
+    transition: width 0.4s ease;
+  }
+  .ev-seg.solid-alliance { background: #1d4ed8; }
+  .ev-seg.lean-alliance { background: #3b82f6; }
+  .ev-seg.tossup { 
+    background: repeating-linear-gradient(45deg, #d97706, #d97706 10px, #b45309 10px, #b45309 20px); 
+  }
+  .ev-seg.lean-horde { background: #ef4444; }
+  .ev-seg.solid-horde { background: #991b1b; }
+  .ev-threshold-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: #ffd100;
+    box-shadow: 0 0 8px #ffd100;
+    z-index: 10;
+  }
+  .electoral-bar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: #94a3b8;
+  }
+  .leg-item { display: inline-flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .leg-dot.solid-alliance { background: #1d4ed8; }
+  .leg-dot.lean-alliance { background: #3b82f6; }
+  .leg-dot.tossup { background: #f59e0b; }
+  .leg-dot.lean-horde { background: #ef4444; }
+  .leg-dot.solid-horde { background: #991b1b; }
+
+  /* Map and Inspector Grid */
+  .map-layout-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 960px) {
+    .map-layout-grid { grid-template-columns: 1fr; }
+  }
+  .map-svg-wrap {
+    background: radial-gradient(circle at 50% 50%, #0d1524 0%, #060910 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px;
+    position: relative;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    overflow: hidden;
+  }
+  .azeroth-map-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    user-select: none;
+  }
+  
+  /* SVG Map Zone Styles */
+  .map-zone {
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .map-zone path, .map-zone polygon, .map-zone rect {
+    transition: fill 0.3s ease, filter 0.2s ease, stroke 0.2s ease;
+    stroke-width: 1.5;
+  }
+  .map-zone:hover path, .map-zone:hover polygon, .map-zone:hover rect {
+    filter: brightness(1.25) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+    stroke-width: 2.5;
+  }
+  .map-zone.selected path, .map-zone.selected polygon, .map-zone.selected rect {
+    stroke: #ffd100 !important;
+    stroke-width: 3 !important;
+    filter: brightness(1.3) drop-shadow(0 0 12px rgba(245, 158, 11, 0.8));
+  }
+  
+  /* Zone Faction Fills */
+  .zone-solid-alliance { fill: #1e3a8a; stroke: #3b82f6; }
+  .zone-lean-alliance { fill: #1d4ed8; stroke: #60a5fa; }
+  .zone-tossup { 
+    fill: #78350f; 
+    stroke: #f59e0b; 
+    animation: tossup-pulse 2.2s infinite; 
+  }
+  .zone-lean-horde { fill: #b91c1c; stroke: #f87171; }
+  .zone-solid-horde { fill: #7f1d1d; stroke: #ef4444; }
+  .zone-uncalled { fill: #1e293b; stroke: #64748b; }
+  
+  @keyframes tossup-pulse {
+    0%, 100% { stroke: #f59e0b; filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4)); }
+    50% { stroke: #ffd100; filter: drop-shadow(0 0 10px rgba(255, 209, 0, 0.8)); }
+  }
+
+  .zone-svg-label {
     font-family: 'Cinzel', serif;
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #f59e0b;
-    margin-bottom: 6px;
+    font-weight: 800;
+    fill: #f8fafc;
+    text-anchor: middle;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.8);
     letter-spacing: 0.5px;
   }
-  .gm-stat-value {
-    font-size: 14.5px;
-    font-weight: 600;
-    color: #fef3c7;
-    line-height: 1.4;
+  .zone-svg-ev {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    fill: #ffd100;
+    text-anchor: middle;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   }
-  .gm-actions-box {
-    background: #151009;
-    padding: 14px 18px;
-    border-radius: 8px;
-    border: 1px solid #78350f;
+  .continent-header-text {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    fill: #94a3b8;
+    text-anchor: middle;
+    opacity: 0.7;
+  }
+  .sea-text {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-style: italic;
+    fill: #38bdf8;
+    text-anchor: middle;
+    opacity: 0.4;
+    letter-spacing: 1px;
+  }
+
+  /* State Inspector (John King / Magic Wall Desk) */
+  .state-inspector {
+    background: #0c1018;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+  }
+  .inspector-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 12px;
+  }
+  .inspector-zone-icon { font-size: 26px; }
+  .inspector-zone-name {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffd100;
+  }
+  .inspector-zone-sub { font-size: 11.5px; color: #94a3b8; }
+  .insp-metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .insp-metric {
+    background: #06090e;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .insp-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+  .insp-val { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 800; margin-top: 2px; }
+  .insp-val.alliance { color: #60a5fa; }
+  .insp-val.horde { color: #f87171; }
+  .insp-val.tossup { color: #fbbf24; }
+  
+  .insp-voters-list { margin-bottom: 14px; }
+  .insp-voters-title { font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 6px; }
+  .insp-voters-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 110px;
+    overflow-y: auto;
+  }
+  .voter-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .voter-chip.alliance { background: rgba(30, 58, 138, 0.4); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4); }
+  .voter-chip.horde { background: rgba(153, 27, 27, 0.4); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+  .voter-chip.abstain { background: rgba(51, 65, 85, 0.4); color: #cbd5e1; border-color: rgba(148, 163, 184, 0.3); }
+
+  .insp-lore {
+    font-size: 11.5px;
+    color: #64748b;
+    font-style: italic;
+    line-height: 1.4;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Key Battlegrounds Section */
+  .battlegrounds-row {
+    background: #080c14;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .bg-section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffd100;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bg-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 10px;
   }
-  .gm-buttons-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .rig-gauge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .rig-gauge.guaranteed { background: rgba(220, 38, 38, 0.3); color: #fca5a5; border: 1px solid #ef4444; }
-  .rig-gauge.possible { background: rgba(217, 119, 6, 0.3); color: #fde68a; border: 1px solid #f59e0b; }
-  .rig-gauge.unlikely { background: rgba(22, 101, 52, 0.3); color: #86efac; border: 1px solid #22c55e; }
-
-  /* SIMULATION OUTPUT LOG */
-  #sim-log-box {
-    margin-top: 12px;
-    background: #06090e;
-    color: #38bdf8;
-    font-family: monospace;
-    font-size: 12px;
-    padding: 12px 16px;
+  .bg-card {
+    background: #0f1420;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    border: 1px solid #1e293b;
-    display: none;
-    max-height: 140px;
-    overflow-y: auto;
-    line-height: 1.5;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid #64748b;
   }
+  .bg-card:hover {
+    background: #182030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+  .bg-card.tossup { border-left-color: #f59e0b; }
+  .bg-card.alliance { border-left-color: #3b82f6; }
+  .bg-card.horde { border-left-color: #ef4444; }
+  .bg-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+  }
+  .bg-card-ev { font-size: 10.5px; color: #ffd100; font-weight: 800; }
+  .bg-card-status { font-size: 11px; font-weight: 700; margin-top: 4px; }
+  .bg-card.tossup .bg-card-status { color: #fbbf24; }
+  .bg-card.alliance .bg-card-status { color: #93c5fd; }
+  .bg-card.horde .bg-card-status { color: #fca5a5; }
+  .bg-card-sub { font-size: 10.5px; color: #64748b; margin-top: 2px; }
 
   /* CONTROLS BAR */
   .controls-panel {
@@ -935,54 +1205,222 @@
     </div>
   </div>
 
-  <!-- GM CORRUPTION & POLL-CLOSING SIMULATOR -->
-  <div class="gm-panel">
-    <div class="gm-header">
+  <!-- =========================================================
+       AZEROTH ELECTION NIGHT MAP & 270-STYLE ELECTORAL DESK
+       ========================================================= -->
+  <div class="election-map-panel">
+    <div class="map-panel-header">
       <div>
-        <div class="gm-title">👑 GM Power Analysis: Can Sodam Rig the Vote?</div>
-        <div class="gm-tagline">Since Sodam chooses when to close the poll as GM ("supposedly random"), how much control does he have?</div>
+        <div class="map-panel-title">🗳️ AZEROTH ELECTORAL COLLEGE & BATTLEGROUND MAP</div>
+        <div class="map-panel-sub">Live CNN-style territorial projection for Kalimdor & Eastern Kingdoms. Click any state/zone to inspect district voters.</div>
       </div>
-      <div id="rig-badge" class="rig-gauge guaranteed">100% RIGGABLE</div>
+      <div class="election-ticker" id="election-ticker">
+        <span class="ticker-badge">🔴 BREAKING</span>
+        <span class="ticker-text" id="ticker-text">Hillsbrad Foothills & Ashenvale remain key swing states too close to call...</span>
+      </div>
     </div>
 
-    <div class="gm-body">
-      <!-- Rig Analysis Stats -->
-      <div class="gm-stat-box">
-        <div class="gm-stat-title">Mathematical Rigability Verdict</div>
-        <div class="gm-stat-value" id="gm-analysis-text">
-          Calculating GM leverage...
+    <!-- 270toWin Segmented Progress Bar -->
+    <div class="electoral-bar-container">
+      <div class="electoral-bar-header">
+        <div class="ev-total alliance">
+          <span class="ev-name">🔵 ALLIANCE</span>
+          <span class="ev-num" id="ev-alliance-total">0</span>
         </div>
-        <div style="font-size: 12px; color: #78350f; margin-top: 8px;" id="gm-detail-math">
-          Sodam controls <strong>6 points</strong> (All 3 Eras) and a <strong>12 pt swing</strong>.
+        <div class="ev-target-center">
+          <div class="ev-target-label">MAJORITY NEEDED TO CLINCH</div>
+          <div class="ev-target-val" id="ev-target-number">22 ELECTORAL VOTES</div>
+        </div>
+        <div class="ev-total horde">
+          <span class="ev-num" id="ev-horde-total">0</span>
+          <span class="ev-name">🔴 HORDE</span>
         </div>
       </div>
 
-      <!-- Interactive GM Controls (Admin Only) -->
-      <div class="gm-actions-box admin-only">
+      <div class="electoral-bar-track">
+        <div class="ev-seg solid-alliance" id="bar-solid-alliance" style="width: 0%" title="Solid Alliance"></div>
+        <div class="ev-seg lean-alliance" id="bar-lean-alliance" style="width: 0%" title="Lean Alliance"></div>
+        <div class="ev-seg tossup" id="bar-tossup" style="width: 100%" title="Tossup / Battlegrounds"></div>
+        <div class="ev-seg lean-horde" id="bar-lean-horde" style="width: 0%" title="Lean Horde"></div>
+        <div class="ev-seg solid-horde" id="bar-solid-horde" style="width: 0%" title="Solid Horde"></div>
+        <div class="ev-threshold-line" style="left: 50%;"></div>
+      </div>
+
+      <div class="electoral-bar-legend">
+        <span class="leg-item"><span class="leg-dot solid-alliance"></span> Solid Alliance</span>
+        <span class="leg-item"><span class="leg-dot lean-alliance"></span> Lean Alliance</span>
+        <span class="leg-item"><span class="leg-dot tossup"></span> ⚡ Battleground / Tossup</span>
+        <span class="leg-item"><span class="leg-dot lean-horde"></span> Lean Horde</span>
+        <span class="leg-item"><span class="leg-dot solid-horde"></span> Solid Horde</span>
+      </div>
+    </div>
+
+    <!-- Dual Map + Magic Wall Grid -->
+    <div class="map-layout-grid">
+      <!-- Interactive Azeroth SVG Map -->
+      <div class="map-svg-wrap">
+        <svg id="azeroth-svg" viewBox="0 0 1000 590" class="azeroth-map-svg">
+          <defs>
+            <radialGradient id="maelstrom-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+              <stop offset="50%" stop-color="#0284c7" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="zone-shadow" x="-10%" y="-10%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.6"/>
+            </filter>
+          </defs>
+
+          <!-- Ocean Lat/Long Grid & Continent Titles -->
+          <line x1="40" y1="150" x2="960" y2="150" stroke="rgba(255,255,255,0.04)" stroke-dasharray="4 4" />
+          <line x1="40" y1="300" x2="960" y2="300" stroke="rgba(255,255,255,0.04)" stroke-dasharray="4 4" />
+          <line x1="40" y1="450" x2="960" y2="450" stroke="rgba(255,255,255,0.04)" stroke-dasharray="4 4" />
+          
+          <text x="210" y="28" class="continent-header-text">KALIMDOR</text>
+          <text x="500" y="28" class="sea-text">THE GREAT SEA</text>
+          <text x="760" y="28" class="continent-header-text">EASTERN KINGDOMS</text>
+
+          <!-- Central Maelstrom Vortex -->
+          <g transform="translate(500, 280)">
+            <circle r="46" fill="url(#maelstrom-glow)" />
+            <circle r="34" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.6">
+              <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="20s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="20" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-dasharray="6 4" opacity="0.8">
+              <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="12s" repeatCount="indefinite"/>
+            </circle>
+            <circle r="6" fill="#0284c7" />
+            <text x="0" y="55" class="sea-text" font-size="9.5">THE MAELSTROM</text>
+          </g>
+
+          <!-- ================= KALIMDOR ZONES ================= -->
+          <!-- TEL: Teldrassil & Darkshore -->
+          <g id="zone-TEL" class="map-zone" onclick="selectZone('TEL')">
+            <path d="M 80,45 C 120,35 165,45 160,95 C 135,125 90,115 70,75 Z" class="zone-solid-alliance" filter="url(#zone-shadow)"/>
+            <text x="115" y="75" class="zone-svg-label">TELDRASSIL</text>
+            <text x="115" y="90" class="zone-svg-ev">3 EV</text>
+          </g>
+
+          <!-- ASH: Ashenvale (KEY SWING STATE) -->
+          <g id="zone-ASH" class="map-zone tossup" onclick="selectZone('ASH')">
+            <path d="M 115,135 L 275,125 L 320,185 L 210,215 L 105,175 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="205" y="165" class="zone-svg-label">⚡ ASHENVALE</text>
+            <text x="205" y="180" class="zone-svg-ev">4 EV (BATTLEGROUND)</text>
+          </g>
+
+          <!-- DUR: Durotar -->
+          <g id="zone-DUR" class="map-zone" onclick="selectZone('DUR')">
+            <path d="M 280,185 L 365,190 L 385,265 L 310,285 L 280,230 Z" class="zone-solid-horde" filter="url(#zone-shadow)"/>
+            <text x="325" y="235" class="zone-svg-label">DUROTAR</text>
+            <text x="325" y="250" class="zone-svg-ev">3 EV</text>
+          </g>
+
+          <!-- MUL: Mulgore -->
+          <g id="zone-MUL" class="map-zone" onclick="selectZone('MUL')">
+            <path d="M 75,235 L 160,230 L 175,325 L 90,335 Z" class="zone-solid-horde" filter="url(#zone-shadow)"/>
+            <text x="125" y="280" class="zone-svg-label">MULGORE</text>
+            <text x="125" y="295" class="zone-svg-ev">3 EV</text>
+          </g>
+
+          <!-- BAR: The Barrens (SWING STATE) -->
+          <g id="zone-BAR" class="map-zone" onclick="selectZone('BAR')">
+            <path d="M 165,220 L 275,225 L 290,340 L 180,340 L 155,270 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="225" y="275" class="zone-svg-label">BARRENS</text>
+            <text x="225" y="290" class="zone-svg-ev">4 EV</text>
+          </g>
+
+          <!-- SIL: Silithus & Tanaris (SWING STATE) -->
+          <g id="zone-SIL" class="map-zone" onclick="selectZone('SIL')">
+            <path d="M 110,355 L 325,355 L 340,490 L 230,550 L 100,470 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="215" y="440" class="zone-svg-label">SILITHUS & TANARIS</text>
+            <text x="215" y="455" class="zone-svg-ev">3 EV (SWING)</text>
+          </g>
+
+          <!-- ================= EASTERN KINGDOMS ZONES ================= -->
+          <!-- TIR: Tirisfal & Silverpine -->
+          <g id="zone-TIR" class="map-zone" onclick="selectZone('TIR')">
+            <path d="M 620,70 L 740,60 L 755,145 L 650,170 L 605,125 Z" class="zone-solid-horde" filter="url(#zone-shadow)"/>
+            <text x="675" y="110" class="zone-svg-label">TIRISFAL</text>
+            <text x="675" y="125" class="zone-svg-ev">3 EV</text>
+          </g>
+
+          <!-- HIL: Hillsbrad Foothills (KEY SWING STATE) -->
+          <g id="zone-HIL" class="map-zone tossup" onclick="selectZone('HIL')">
+            <path d="M 655,175 L 770,150 L 795,215 L 675,235 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="725" y="195" class="zone-svg-label">⚡ HILLSBRAD</text>
+            <text x="725" y="210" class="zone-svg-ev">5 EV (CRITICAL SWING)</text>
+          </g>
+
+          <!-- ALT: Alterac & Arathi (SWING STATE) -->
+          <g id="zone-ALT" class="map-zone" onclick="selectZone('ALT')">
+            <path d="M 775,145 L 890,135 L 910,235 L 800,225 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="845" y="185" class="zone-svg-label">ALTERAC / ARATHI</text>
+            <text x="845" y="200" class="zone-svg-ev">4 EV (BATTLEGROUND)</text>
+          </g>
+
+          <!-- DUN: Dun Morogh & Loch Modan -->
+          <g id="zone-DUN" class="map-zone" onclick="selectZone('DUN')">
+            <path d="M 675,245 L 870,240 L 885,320 L 700,330 Z" class="zone-solid-alliance" filter="url(#zone-shadow)"/>
+            <text x="780" y="280" class="zone-svg-label">DUN MOROGH</text>
+            <text x="780" y="295" class="zone-svg-ev">3 EV</text>
+          </g>
+
+          <!-- ELW: Elwynn & Westfall -->
+          <g id="zone-ELW" class="map-zone" onclick="selectZone('ELW')">
+            <path d="M 645,340 L 780,340 L 795,430 L 650,430 Z" class="zone-solid-alliance" filter="url(#zone-shadow)"/>
+            <text x="715" y="385" class="zone-svg-label">ELWYNN & WESTFALL</text>
+            <text x="715" y="400" class="zone-svg-ev">4 EV</text>
+          </g>
+
+          <!-- STV: Stranglethorn Vale (KEY SWING STATE) -->
+          <g id="zone-STV" class="map-zone tossup" onclick="selectZone('STV')">
+            <path d="M 660,440 L 780,440 L 760,565 L 705,575 L 670,510 Z" class="zone-tossup" filter="url(#zone-shadow)"/>
+            <text x="720" y="500" class="zone-svg-label">⚡ STRANGLETHORN</text>
+            <text x="720" y="515" class="zone-svg-ev">4 EV (BATTLEGROUND)</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- State Inspector (John King / Magic Wall Desk) -->
+      <div class="state-inspector" id="state-inspector">
         <div>
-          <div class="gm-stat-title">Simulate GM Actions</div>
-          <div style="font-size: 12.5px; color: #475569; margin-bottom: 8px;">
-            Sodam's Desired Faction:
-            <select id="sodam-desired-faction" class="filter-select" style="padding: 3px 8px; font-size: 12px;" onchange="recalc()">
-              <option value="Alliance" selected>🔵 Alliance</option>
-              <option value="Horde">🔴 Horde</option>
-            </select>
+          <div class="inspector-header">
+            <span class="inspector-zone-icon" id="insp-icon">⚔️</span>
+            <div>
+              <div class="inspector-zone-name" id="insp-name">Hillsbrad Foothills</div>
+              <div class="inspector-zone-sub" id="insp-sub">Eastern Kingdoms • Key Battleground State</div>
+            </div>
+          </div>
+          <div class="insp-metric-row">
+            <div class="insp-metric">
+              <div class="insp-label">Delegates</div>
+              <div class="insp-val" id="insp-ev">5 EV</div>
+            </div>
+            <div class="insp-metric">
+              <div class="insp-label">Status</div>
+              <div class="insp-val tossup" id="insp-status">TOSSUP</div>
+            </div>
+            <div class="insp-metric">
+              <div class="insp-label">Lead Margin</div>
+              <div class="insp-val" id="insp-margin">EVEN</div>
+            </div>
+          </div>
+          <div class="insp-voters-list">
+            <div class="insp-voters-title">Guild Voters in this District:</div>
+            <div class="insp-voters-chips" id="insp-voters-chips"></div>
           </div>
         </div>
-
-        <div class="gm-buttons-row">
-          <button class="btn btn-gm" style="font-size: 12px; padding: 6px 12px;" onclick="closePollNow()">
-            🛑 "STOP THE COUNT!" (Close Poll Now)
-          </button>
-          <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="simulateRandomClose()">
-            🎲 Simulate "Random" Timing Window
-          </button>
+        <div class="insp-lore" id="insp-lore">
+          "Tarren Mill vs Southshore. The most legendary Vanilla world PvP warzone. A razor-thin battleground that could decide the faction."
         </div>
       </div>
     </div>
 
-    <!-- Simulation Output Log -->
-    <div id="sim-log-box"></div>
+    <!-- Key Battleground Swing States Row -->
+    <div class="battlegrounds-row">
+      <div class="bg-section-title">⚡ KEY BATTLEGROUND STATES TO WATCH (TOSSUP & SWING FRONTS)</div>
+      <div class="bg-cards-grid" id="bg-cards-grid"></div>
+    </div>
   </div>
 
   <!-- CONTROLS PANEL -->
@@ -1140,18 +1578,6 @@
         <tbody id="abstain-tbody"></tbody>
       </table>
     </div>
-  </div>
-</div>
-
-<!-- POLL CLOSED POPUP MODAL -->
-<div id="poll-modal" class="modal-overlay">
-  <div class="modal-card">
-    <div class="modal-icon">📜</div>
-    <div class="modal-title">GM Sodam Has Closed the Poll!</div>
-    <div class="modal-body" id="modal-desc">
-      Official announcement has been posted in guild chat.
-    </div>
-    <button class="btn btn-primary" onclick="closeModal()">Dismiss Declaration</button>
   </div>
 </div>
 
@@ -1787,121 +2213,307 @@ function recalc() {
     marginEl.textContent = "Active votes are completely tied";
   }
 
-  // UPDATE GM RIG-O-METER ANALYSIS
-  const desiredFaction = document.getElementById("sodam-desired-faction").value;
-  const rigBadge = document.getElementById("rig-badge");
-  const gmAnalysis = document.getElementById("gm-analysis-text");
-  const gmMath = document.getElementById("gm-detail-math");
-
-  const sodamSwing = isOneVote ? 2 : (sodamPower * 2);
-  const sodamCurrentFaction = sodamPlayer ? sodamPlayer.faction : "Unknown";
-
-  let canRigNow = false;
-  let rigReason = "";
-
-  if (currentLeader === desiredFaction && margin > 0) {
-    canRigNow = true;
-    rigBadge.className = "rig-gauge guaranteed";
-    rigBadge.textContent = "🎯 100% RIGGABLE RIGHT NOW";
-    rigReason = `<strong>YES! ${desiredFaction} is already ahead (+${margin} ${isOneVote?'votes':'pts'}).</strong> Sodam can simply close the poll right now ("stopping time" tactic) and declare victory without changing anything!`;
-  } else {
-    // If desired faction is behind or tied, can Sodam's own vote flip it?
-    let potentialMarginAfterSodamFlip = 0;
-    if (sodamCurrentFaction !== desiredFaction) {
-      // Sodam can switch from opponent/abstain to desired!
-      potentialMarginAfterSodamFlip = sodamPower - margin;
-    }
-
-    if (potentialMarginAfterSodamFlip > 0) {
-      canRigNow = true;
-      rigBadge.className = "rig-gauge guaranteed";
-      rigBadge.textContent = "🎯 RIGGABLE VIA VOTE SWAP";
-      rigReason = `<strong>YES! Sodam's personal swing is ${sodamSwing} ${isOneVote?'votes':'pts'}.</strong> If Sodam switches his vote to ${desiredFaction} right now and calls "Poll closed!", ${desiredFaction} wins by +${potentialMarginAfterSodamFlip} ${isOneVote?'votes':'pts'}!`;
-    } else {
-      rigBadge.className = "rig-gauge possible";
-      rigBadge.textContent = "🎲 RIGGABLE VIA TIMING WINDOW";
-      rigReason = `<strong>${desiredFaction} is behind by ${margin} ${isOneVote?'votes':'pts'}.</strong> Because members are constantly swapping, Sodam just needs to wait for a 1-2 voter fluctuation where ${desiredFaction} spikes ahead, then immediately slam the poll closed!`;
-    }
-  }
-
-  gmAnalysis.innerHTML = rigReason;
-  const unitLabel = isOneVote ? "vote" : "points";
-  const swingUnit = isOneVote ? "votes" : "pts";
-  const breakdownStr = isOneVote ? "1 voter" : `Classic: ${wc}, SoD: ${ws}, Retail: ${wr}`;
-  gmMath.innerHTML = `Sodam controls <strong>${sodamPower} ${unitLabel}</strong> (${breakdownStr}) with a swing of <strong>${sodamSwing} ${swingUnit}</strong>. Combined with "Optional Stopping" (closing at a peak), the GM has near-total control over the outcome.`;
+  // UPDATE AZEROTH ELECTORAL COLLEGE & BATTLEGROUND MAP
+  const electionData = calculateElectionResults();
+  updateElectionMapUI(electionData);
 }
 
-function closePollNow() {
-  if (!isAdmin) return;
-  const winnerText = document.getElementById("winner-badge").textContent;
-  const marginText = document.getElementById("margin-text").textContent;
-  const modal = document.getElementById("poll-modal");
-  const modalDesc = document.getElementById("modal-desc");
+/* =========================================================
+   AZEROTH ELECTORAL COLLEGE & BATTLEGROUND DISTRICT DATA
+   ========================================================= */
+const AZEROTH_STATES = [
+  // Kalimdor
+  { id: "TEL", name: "Teldrassil & Darkshore", continent: "Kalimdor", ev: 3, bias: "Alliance", isSwing: false, icon: "🌳", lore: "Ancient World Tree of Darnassus. Core Night Elf heartland.", voterIds: [27, 28, 29] }, // monarch, bob, Biolume
+  { id: "ASH", name: "Ashenvale", continent: "Kalimdor", ev: 4, bias: "Tossup", isSwing: true, icon: "🌲", lore: "The Lumber Wars: Warsong Outriders clash with Silverwing Sentinels. Bloodiest border warzone.", voterIds: [13, 14, 32, 33] }, // megadave, Maxibon, cloggy, malc
+  { id: "DUR", name: "Durotar", continent: "Kalimdor", ev: 3, bias: "Horde", isSwing: false, icon: "🐺", lore: "Orgrimmar citadel and the harsh red rock home of the Horde.", voterIds: [1, 2, 22] }, // rkkixlol, drey, brokest boi
+  { id: "MUL", name: "Mulgore", continent: "Kalimdor", ev: 3, bias: "Horde", isSwing: false, icon: "🦬", lore: "High bluffs of Thunder Bluff and rolling golden plains of the Tauren.", voterIds: [4, 5, 6] }, // xak, edd, bosse
+  { id: "BAR", name: "The Barrens", continent: "Kalimdor", ev: 4, bias: "Tossup", isSwing: true, icon: "🌾", lore: "The Crossroads savanna. Famous world PvP skirmishes and Chuck Norris banter.", voterIds: [19, 3, 38, 39] }, // Vanargand, korovaemae, chobo, port
+  { id: "SIL", name: "Silithus & Tanaris", continent: "Kalimdor", ev: 3, bias: "Tossup", isSwing: true, icon: "🏜️", lore: "The Shifting Sands and Gadgetzan desert arena. Crucial endgame contested front.", voterIds: [40, 41, 42] }, // droggo, atoz, noxqs
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // Eastern Kingdoms
+  { id: "TIR", name: "Tirisfal & Silverpine", continent: "Eastern Kingdoms", ev: 3, bias: "Horde", isSwing: false, icon: "🧟", lore: "The Undercity and Shadowfang Keep. Core domain of the Forsaken.", voterIds: [7, 8, 9] }, // bancai, raksodwarf, Erelja
+  { id: "HIL", name: "Hillsbrad Foothills", continent: "Eastern Kingdoms", ev: 5, bias: "Tossup", isSwing: true, icon: "⚔️", lore: "Tarren Mill vs Southshore. The most legendary Vanilla world PvP warzone.", voterIds: [10, 11, 12, 30, 31] }, // sam, ayer, elstongnome, purpleman, yucca
+  { id: "ALT", name: "Alterac & Arathi", continent: "Eastern Kingdoms", ev: 4, bias: "Tossup", isSwing: true, icon: "🚩", lore: "Stormpike vs Frostwolf in AV, League of Arathor vs Defilers in AB.", voterIds: [17, 18, 36, 37] }, // fartlordx, Nexu / Deneve, starfirebeam, celth
+  { id: "DUN", name: "Dun Morogh & Loch Modan", continent: "Eastern Kingdoms", ev: 3, bias: "Alliance", isSwing: false, icon: "🏔️", lore: "Snowy peaks of Khaz Modan and the impenetrable Great Forge of Ironforge.", voterIds: [24, 25, 26] }, // neych, grimzzy, mcflash
+  { id: "ELW", name: "Elwynn & Westfall", continent: "Eastern Kingdoms", ev: 4, bias: "Alliance", isSwing: false, icon: "🏰", lore: "Kingdom of Stormwind, Goldshire, and the Deadmines of Westfall.", voterIds: [20, 21, 23, 35] }, // sodam, falkoro, thistlewind, zerodas
+  { id: "STV", name: "Stranglethorn Vale", continent: "Eastern Kingdoms", ev: 4, bias: "Tossup", isSwing: true, icon: "🌴", lore: "The jungle meat grinder: Gurubashi Arena, Nesingwary camp, Booty Bay.", voterIds: [15, 16, 34, 43] } // scam, wondo, glen, plukkd
+];
 
-  modalDesc.innerHTML = `
-    <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
-      ${winnerText}!
-    </div>
-    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 12px;">
-      ${marginText}
-    </div>
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 12px; color: #334155; text-align: left;">
-      👑 <strong>Official GM Announcement:</strong><br>
-      <em>"Alright guys, time is up! Poll is officially closed as of <strong>${timeStr}</strong>. The result has been tallied and locked in for WoW Forever!"</em><br>
-      <span style="font-size: 11px; color: #94a3b8;">(Purely random closing time, trust me bro 😉)</span>
-    </div>
-  `;
-  modal.style.display = "flex";
-}
+let selectedZoneId = "HIL";
+let lastElectionData = null;
 
-function closeModal() {
-  document.getElementById("poll-modal").style.display = "none";
-}
-
-function simulateRandomClose() {
-  if (!isAdmin) return;
-  const logBox = document.getElementById("sim-log-box");
-  logBox.style.display = "block";
-  logBox.innerHTML = "⏳ Running Monte Carlo simulation of 25 timeline steps with fluctuating voter swaps...\n";
-
-  const desiredFaction = document.getElementById("sodam-desired-faction").value;
+function calculateElectionResults() {
   const isOneVote = votingMode === "onevote";
+  let totalAllianceEV = 0;
+  let totalHordeEV = 0;
+  let totalTossupEV = 0;
+  let solidAllianceEV = 0;
+  let leanAllianceEV = 0;
+  let leanHordeEV = 0;
+  let solidHordeEV = 0;
 
-  let steps = 0;
-  let caughtWindow = false;
-  let simMargin = (desiredFaction === "Alliance" ? 1 : -1) * (parseInt(document.getElementById("alliance-score").textContent) - parseInt(document.getElementById("horde-score").textContent));
+  const stateResults = {};
+  const playerMap = new Map(players.map(p => [p.id, p]));
 
-  const interval = setInterval(() => {
-    steps++;
-    // Simulate random swing between -3 and +3
-    const swing = Math.floor(Math.random() * 7) - 3;
-    simMargin += swing;
-
-    const timeLabel = `T+${steps * 45}m`;
-    if (simMargin > 0 && !caughtWindow) {
-      caughtWindow = true;
-      logBox.innerHTML += `► [${timeLabel}] Fluctuation: ${desiredFaction} hits +${simMargin} ${isOneVote?'votes':'pts'}! 🎯 SODAM CALLS: "POLL CLOSED!"\n`;
-      logBox.innerHTML += `=======================================================\n`;
-      logBox.innerHTML += `✅ VERDICT: Sodam successfully rigged the vote for ${desiredFaction} at Step ${steps}!\n`;
-      logBox.scrollTop = logBox.scrollHeight;
-      clearInterval(interval);
-      return;
-    } else {
-      logBox.innerHTML += `► [${timeLabel}] Swap event: ${desiredFaction} margin at ${simMargin >= 0 ? '+' : ''}${simMargin}...\n`;
-    }
-
-    logBox.scrollTop = logBox.scrollHeight;
-
-    if (steps >= 12) {
-      clearInterval(interval);
-      if (!caughtWindow) {
-        logBox.innerHTML += `► [T+9h] Sodam switches his own vote (+12 swing) and hits CLOSE! ${desiredFaction} wins!\n`;
+  // Dynamically assign any unassigned or newly added players to key battlegrounds
+  const assignedIds = new Set();
+  AZEROTH_STATES.forEach(st => st.voterIds.forEach(id => assignedIds.add(id)));
+  
+  const swingStateIds = ["HIL", "ASH", "STV", "ALT", "BAR"];
+  let swingIdx = 0;
+  players.forEach(p => {
+    if (!assignedIds.has(p.id)) {
+      const targetState = AZEROTH_STATES.find(s => s.id === swingStateIds[swingIdx % swingStateIds.length]);
+      if (targetState) {
+        targetState.voterIds.push(p.id);
+        assignedIds.add(p.id);
+        swingIdx++;
       }
     }
-  }, 200);
+  });
+
+  AZEROTH_STATES.forEach(st => {
+    let aPoints = 0;
+    let hPoints = 0;
+    let absPoints = 0;
+    const districtPlayers = [];
+
+    st.voterIds.forEach(vid => {
+      const p = playerMap.get(vid);
+      if (!p) return;
+      districtPlayers.push(p);
+
+      let weight = 1;
+      if (!isOneVote) {
+        const wc = parseFloat(document.getElementById("w-classic").value) || 0;
+        const ws = parseFloat(document.getElementById("w-sod").value) || 0;
+        const wr = parseFloat(document.getElementById("w-retail").value) || 0;
+        weight = (p.c ? wc : 0) + (p.s ? ws : 0) + (p.r ? wr : 0);
+      }
+
+      if (p.faction === "Alliance") aPoints += weight;
+      else if (p.faction === "Horde") hPoints += weight;
+      else absPoints += weight;
+    });
+
+    const diff = aPoints - hPoints;
+    let statusClass = "zone-tossup";
+    let statusLabel = "TOSSUP";
+    let winner = "Tossup";
+
+    if (diff >= 2) {
+      statusClass = "zone-solid-alliance";
+      statusLabel = "SOLID ALLIANCE";
+      winner = "Alliance";
+      solidAllianceEV += st.ev;
+      totalAllianceEV += st.ev;
+    } else if (diff === 1) {
+      statusClass = "zone-lean-alliance";
+      statusLabel = "LEAN ALLIANCE";
+      winner = "Alliance";
+      leanAllianceEV += st.ev;
+      totalAllianceEV += st.ev;
+    } else if (diff <= -2) {
+      statusClass = "zone-solid-horde";
+      statusLabel = "SOLID HORDE";
+      winner = "Horde";
+      solidHordeEV += st.ev;
+      totalHordeEV += st.ev;
+    } else if (diff === -1) {
+      statusClass = "zone-lean-horde";
+      statusLabel = "LEAN HORDE";
+      winner = "Horde";
+      leanHordeEV += st.ev;
+      totalHordeEV += st.ev;
+    } else {
+      statusClass = "zone-tossup";
+      statusLabel = "⚡ TOO CLOSE TO CALL";
+      winner = "Tossup";
+      totalTossupEV += st.ev;
+    }
+
+    stateResults[st.id] = {
+      ...st,
+      aPoints,
+      hPoints,
+      absPoints,
+      diff,
+      statusClass,
+      statusLabel,
+      winner,
+      players: districtPlayers
+    };
+  });
+
+  return {
+    stateResults,
+    totalAllianceEV,
+    totalHordeEV,
+    totalTossupEV,
+    solidAllianceEV,
+    leanAllianceEV,
+    leanHordeEV,
+    solidHordeEV,
+    totalEV: totalAllianceEV + totalHordeEV + totalTossupEV
+  };
+}
+
+function updateElectionMapUI(electionData) {
+  lastElectionData = electionData;
+  const { stateResults, totalAllianceEV, totalHordeEV, totalTossupEV, solidAllianceEV, leanAllianceEV, leanHordeEV, solidHordeEV, totalEV } = electionData;
+
+  // 1. Update 270toWin Bar
+  const aTotalEl = document.getElementById("ev-alliance-total");
+  const hTotalEl = document.getElementById("ev-horde-total");
+  const targetEl = document.getElementById("ev-target-number");
+  
+  if (aTotalEl) aTotalEl.textContent = totalAllianceEV;
+  if (hTotalEl) hTotalEl.textContent = totalHordeEV;
+  const neededToWin = Math.floor(totalEV / 2) + 1;
+  if (targetEl) targetEl.textContent = `${neededToWin} TO CLINCH MAJORITY`;
+
+  if (totalEV > 0) {
+    const pSolA = (solidAllianceEV / totalEV) * 100;
+    const pLeanA = (leanAllianceEV / totalEV) * 100;
+    const pToss = (totalTossupEV / totalEV) * 100;
+    const pLeanH = (leanHordeEV / totalEV) * 100;
+    const pSolH = (solidHordeEV / totalEV) * 100;
+
+    const bSolA = document.getElementById("bar-solid-alliance");
+    const bLeanA = document.getElementById("bar-lean-alliance");
+    const bToss = document.getElementById("bar-tossup");
+    const bLeanH = document.getElementById("bar-lean-horde");
+    const bSolH = document.getElementById("bar-solid-horde");
+
+    if (bSolA) bSolA.style.width = `${pSolA}%`;
+    if (bLeanA) bLeanA.style.width = `${pLeanA}%`;
+    if (bToss) bToss.style.width = `${pToss}%`;
+    if (bLeanH) bLeanH.style.width = `${pLeanH}%`;
+    if (bSolH) bSolH.style.width = `${pSolH}%`;
+  }
+
+  // 2. Update SVG Map Zones
+  AZEROTH_STATES.forEach(st => {
+    const res = stateResults[st.id];
+    const gEl = document.getElementById(`zone-${st.id}`);
+    if (!gEl || !res) return;
+
+    gEl.classList.remove("selected");
+    const shape = gEl.querySelector("path, polygon, rect");
+    if (shape) {
+      shape.setAttribute("class", res.statusClass);
+    }
+    if (selectedZoneId === st.id) {
+      gEl.classList.add("selected");
+    }
+  });
+
+  // 3. Update State Inspector
+  const selRes = stateResults[selectedZoneId] || stateResults["HIL"];
+  if (selRes) {
+    const iconEl = document.getElementById("insp-icon");
+    const nameEl = document.getElementById("insp-name");
+    const subEl = document.getElementById("insp-sub");
+    const evEl = document.getElementById("insp-ev");
+    const statusEl = document.getElementById("insp-status");
+    const marginEl = document.getElementById("insp-margin");
+    const chipsEl = document.getElementById("insp-voters-chips");
+    const loreEl = document.getElementById("insp-lore");
+
+    if (iconEl) iconEl.textContent = selRes.icon;
+    if (nameEl) nameEl.textContent = selRes.name;
+    if (subEl) subEl.textContent = `${selRes.continent} • ${selRes.isSwing ? 'Key Battleground State' : 'Base Territory'}`;
+    if (evEl) evEl.textContent = `${selRes.ev} EV`;
+
+    if (statusEl) {
+      statusEl.textContent = selRes.statusLabel;
+      statusEl.className = `insp-val ${selRes.winner.toLowerCase()}`;
+    }
+
+    if (marginEl) {
+      if (selRes.diff > 0) {
+        marginEl.textContent = `Alliance +${selRes.diff}`;
+        marginEl.className = "insp-val alliance";
+      } else if (selRes.diff < 0) {
+        marginEl.textContent = `Horde +${Math.abs(selRes.diff)}`;
+        marginEl.className = "insp-val horde";
+      } else {
+        marginEl.textContent = "DEAD HEAT";
+        marginEl.className = "insp-val tossup";
+      }
+    }
+
+    if (chipsEl) {
+      chipsEl.innerHTML = "";
+      if (selRes.players.length === 0) {
+        chipsEl.innerHTML = `<span style="color:#64748b; font-size:11.5px;">No registered voters</span>`;
+      } else {
+        selRes.players.forEach(p => {
+          const chip = document.createElement("span");
+          chip.className = `voter-chip ${p.faction.toLowerCase()}`;
+          const factionIcon = p.faction === "Alliance" ? "🔵" : (p.faction === "Horde" ? "🔴" : "⚪");
+          chip.textContent = `${factionIcon} ${p.name}`;
+          chipsEl.appendChild(chip);
+        });
+      }
+    }
+
+    if (loreEl) loreEl.textContent = `"${selRes.lore}"`;
+  }
+
+  // 4. Update Key Battlegrounds Grid
+  const bgGrid = document.getElementById("bg-cards-grid");
+  if (bgGrid) {
+    bgGrid.innerHTML = "";
+    const keySwingIds = ["HIL", "ASH", "STV", "ALT", "BAR"];
+    keySwingIds.forEach(kid => {
+      const kRes = stateResults[kid];
+      if (!kRes) return;
+      const card = document.createElement("div");
+      const cardType = kRes.winner === "Alliance" ? "alliance" : (kRes.winner === "Horde" ? "horde" : "tossup");
+      card.className = `bg-card ${cardType}`;
+      card.onclick = () => selectZone(kid);
+
+      let marginStr = "DEAD HEAT";
+      if (kRes.diff > 0) marginStr = `Alliance +${kRes.diff}`;
+      else if (kRes.diff < 0) marginStr = `Horde +${Math.abs(kRes.diff)}`;
+
+      card.innerHTML = `
+        <div class="bg-card-title">
+          <span>${kRes.icon} ${kRes.name}</span>
+          <span class="bg-card-ev">${kRes.ev} EV</span>
+        </div>
+        <div class="bg-card-status">${kRes.statusLabel}</div>
+        <div class="bg-card-sub">${marginStr} (${kRes.aPoints}A - ${kRes.hPoints}H${kRes.absPoints > 0 ? ` - ${kRes.absPoints} Abs` : ''})</div>
+      `;
+      bgGrid.appendChild(card);
+    });
+  }
+
+  // 5. Update Breaking News Ticker
+  const tickerEl = document.getElementById("ticker-text");
+  if (tickerEl) {
+    const hil = stateResults["HIL"];
+    const ash = stateResults["ASH"];
+    const stv = stateResults["STV"];
+
+    if (hil && ash && (hil.diff === 0 || ash.diff === 0)) {
+      tickerEl.textContent = `FLASH: Hillsbrad (${hil.diff >= 0 ? '+' : ''}${hil.diff}) & Ashenvale (${ash.diff >= 0 ? '+' : ''}${ash.diff}) are dead-heat battlegrounds holding the balance of power!`;
+    } else if (totalAllianceEV > totalHordeEV) {
+      tickerEl.textContent = `PROJECTION: Alliance holds electoral lead (${totalAllianceEV} to ${totalHordeEV} EV). ${hil.name} leans ${hil.winner}.`;
+    } else if (totalHordeEV > totalAllianceEV) {
+      tickerEl.textContent = `PROJECTION: Horde holds electoral lead (${totalHordeEV} to ${totalAllianceEV} EV). ${ash.name} leans ${ash.winner}.`;
+    } else {
+      tickerEl.textContent = `ELECTION TIED: 21-21 in key districts. Undecided voters in Stranglethorn & Hillsbrad will decide the server faction!`;
+    }
+  }
+}
+
+function selectZone(zoneId) {
+  selectedZoneId = zoneId;
+  if (lastElectionData) {
+    updateElectionMapUI(lastElectionData);
+  }
 }
 
 function copyPublicLink() {
