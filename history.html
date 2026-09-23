@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vote History & Faction Defection Tracker | WoW Forever</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --horde-red: #c41e3a;
+    --horde-dark: #800a1d;
+    --alliance-blue: #0078ff;
+    --alliance-dark: #004499;
+    --gold: #ffd100;
+    --gold-dark: #b45309;
+    --bg-dark: #07090e;
+    --card-bg: #0d121c;
+    --card-border: rgba(255, 255, 255, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg-dark);
+    background-image: 
+      radial-gradient(circle at 10% 10%, rgba(196, 30, 58, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 90% 10%, rgba(0, 120, 255, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
+      linear-gradient(180deg, #090d14 0%, #05070a 100%);
+    background-attachment: fixed;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 24px 20px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* TOP NAV */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-title {
+    font-family: 'Cinzel', Georgia, serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-links {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #111722;
+    color: #cbd5e1;
+  }
+  .nav-btn:hover {
+    background: #1e2838;
+    color: #ffd100;
+    border-color: rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+  }
+  .nav-btn.primary {
+    background: linear-gradient(180deg, #5865F2 0%, #4752c4 100%);
+    color: #fff;
+    border-color: #5865F2;
+  }
+  .nav-btn.primary:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 14px rgba(88, 101, 242, 0.5);
+  }
+
+  /* HEADER */
+  .page-header {
+    background: linear-gradient(180deg, #131a26 0%, #0d121c 100%);
+    border: 1px solid var(--card-border);
+    border-top: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .page-title {
+    font-family: 'Cinzel', serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .page-sub {
+    font-size: 13.5px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+
+  /* STATS CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .stat-card.h2a { border-left: 4px solid var(--alliance-blue); }
+  .stat-card.a2h { border-left: 4px solid var(--horde-red); }
+  .stat-card.total { border-left: 4px solid var(--gold); }
+  .stat-card.neutral { border-left: 4px solid #64748b; }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .stat-num {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: #f1f5f9;
+  }
+  .stat-card.h2a .stat-num { color: #93c5fd; }
+  .stat-card.a2h .stat-num { color: #fca5a5; }
+  .stat-card.total .stat-num { color: var(--gold); }
+
+  /* FILTERS */
+  .filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #0f1520;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+  .filter-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    background: #080b11;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: #f8fafc;
+    font-size: 13px;
+    outline: none;
+    width: 220px;
+  }
+  .search-input:focus { border-color: var(--gold); }
+  .filter-select {
+    background: #080b11;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: #cbd5e1;
+    font-size: 12.5px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* TIMELINE TABLE */
+  .table-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .history-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    background: #090e17;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .history-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+  }
+  .history-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* BADGES */
+  .faction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11.5px;
+  }
+  .faction-badge.horde {
+    background: rgba(196, 30, 58, 0.25);
+    color: #fca5a5;
+    border: 1px solid rgba(196, 30, 58, 0.4);
+  }
+  .faction-badge.alliance {
+    background: rgba(0, 120, 255, 0.25);
+    color: #93c5fd;
+    border: 1px solid rgba(0, 120, 255, 0.4);
+  }
+  .faction-badge.abstain {
+    background: rgba(100, 116, 139, 0.25);
+    color: #cbd5e1;
+    border: 1px solid rgba(100, 116, 139, 0.35);
+  }
+  .faction-badge.removed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .swap-arrow {
+    display: inline-block;
+    margin: 0 8px;
+    color: #ffd100;
+    font-weight: 900;
+  }
+
+  .source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .source-badge.discord {
+    background: rgba(88, 101, 242, 0.2);
+    color: #a5b4fc;
+    border: 1px solid rgba(88, 101, 242, 0.4);
+  }
+  .source-badge.admin {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde047;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+  }
+  .source-badge.initial {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  .player-name {
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.3px;
+  }
+
+  .time-cell {
+    color: #94a3b8;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+    font-size: 13.5px;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #1e293b;
+    color: #ffd100;
+    border: 1px solid #ffd100;
+    padding: 10px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- TOP NAV -->
+  <div class="top-nav">
+    <div class="nav-left">
+      <a href="/" class="brand-title">
+        <span>⚔️</span> WoW Forever Faction Vote
+      </a>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-btn">🗳️ Election Map (Public)</a>
+      <a href="/admin" class="nav-btn">⚔️ Council Admin</a>
+      <button class="nav-btn primary" id="btn-sync" onclick="syncDiscord()">🤖 Sync Discord Poll</button>
+      <button class="nav-btn" onclick="fetchHistory()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-title">📜 Faction Defection & Vote History</div>
+    <div class="page-sub">
+      Live audit log tracking who swapped factions, when they flipped, and whether votes originated from the native Discord Poll (#sign-up-forever) or manual Admin council edits.
+    </div>
+  </div>
+
+  <!-- STATS SUMMARY -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">Total Swaps / Events</div>
+      <div class="stat-num" id="stat-total">0</div>
+    </div>
+    <div class="stat-card h2a">
+      <div class="stat-label">🔴 ➔ 🔵 Horde ➔ Alliance Defectors</div>
+      <div class="stat-num" id="stat-h2a">0</div>
+    </div>
+    <div class="stat-card a2h">
+      <div class="stat-label">🔵 ➔ 🔴 Alliance ➔ Horde Defectors</div>
+      <div class="stat-num" id="stat-a2h">0</div>
+    </div>
+    <div class="stat-card neutral">
+      <div class="stat-label">⚪ Swapped to Abstain / Undecided</div>
+      <div class="stat-num" id="stat-abstain">0</div>
+    </div>
+  </div>
+
+  <!-- FILTER CONTROLS -->
+  <div class="filter-bar">
+    <div class="filter-controls">
+      <input type="text" id="search-box" class="search-input" placeholder="🔍 Search player..." oninput="renderHistoryTable()">
+      <select id="filter-type" class="filter-select" onchange="renderHistoryTable()">
+        <option value="all">All Events</option>
+        <option value="h2a">Horde ➔ Alliance Swaps</option>
+        <option value="a2h">Alliance ➔ Horde Swaps</option>
+        <option value="to_abstain">➔ Abstain / Undecided</option>
+        <option value="from_abstain">Abstain ➔ Decided</option>
+      </select>
+      <select id="filter-source" class="filter-select" onchange="renderHistoryTable()">
+        <option value="all">All Sources</option>
+        <option value="discord_sync">Discord Native Poll</option>
+        <option value="admin">Admin Council</option>
+      </select>
+    </div>
+    <div id="live-indicator" style="font-size: 11.5px; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+      <span style="display:inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+      Live Polling Active (4s)
+    </div>
+  </div>
+
+  <!-- HISTORY TABLE -->
+  <div class="table-panel">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th style="width: 140px;">Time</th>
+          <th style="width: 180px;">Player</th>
+          <th style="width: 260px;">Faction Transition</th>
+          <th style="width: 180px;">Source</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody id="history-tbody">
+        <tr>
+          <td colspan="6" class="empty-state">Loading vote audit log...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast">Notice</div>
+
+<script>
+let historyData = [];
+
+async function fetchHistory() {
+  try {
+    const res = await fetch("/api/history?limit=250");
+    if (res.ok) {
+      historyData = await res.json();
+      renderStats();
+      renderHistoryTable();
+    }
+  } catch (err) {
+    console.error("Failed to fetch history:", err);
+  }
+}
+
+function formatRelativeTime(tsStr) {
+  if (!tsStr) return "Just now";
+  // Parse SQLite UTC timestamp
+  const date = new Date(tsStr + (tsStr.endsWith("Z") ? "" : "Z"));
+  if (isNaN(date.getTime())) return tsStr;
+
+  const now = new Date();
+  const diffSec = Math.floor((now - date) / 1000);
+
+  if (diffSec < 45) return "Just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderStats() {
+  let total = 0;
+  let h2a = 0;
+  let a2h = 0;
+  let abstain = 0;
+
+  historyData.forEach(h => {
+    if (h.changed_by === 'initial') return;
+    total++;
+    if (h.old_faction === 'Horde' && h.new_faction === 'Alliance') h2a++;
+    else if (h.old_faction === 'Alliance' && h.new_faction === 'Horde') a2h++;
+    else if (h.new_faction === 'Abstain') abstain++;
+  });
+
+  document.getElementById("stat-total").textContent = total;
+  document.getElementById("stat-h2a").textContent = h2a;
+  document.getElementById("stat-a2h").textContent = a2h;
+  document.getElementById("stat-abstain").textContent = abstain;
+}
+
+function renderHistoryTable() {
+  const tbody = document.getElementById("history-tbody");
+  tbody.innerHTML = "";
+
+  const q = document.getElementById("search-box").value.toLowerCase().trim();
+  const fType = document.getElementById("filter-type").value;
+  const fSource = document.getElementById("filter-source").value;
+
+  const filtered = historyData.filter(h => {
+    if (h.changed_by === 'initial') return false; // Hide seed baseline from active swap feed
+    if (q && !h.player_name.toLowerCase().includes(q)) return false;
+    if (fSource !== 'all' && h.changed_by !== fSource) return false;
+
+    if (fType === 'h2a' && !(h.old_faction === 'Horde' && h.new_faction === 'Alliance')) return false;
+    if (fType === 'a2h' && !(h.old_faction === 'Alliance' && h.new_faction === 'Horde')) return false;
+    if (fType === 'to_abstain' && h.new_faction !== 'Abstain') return false;
+    if (fType === 'from_abstain' && h.old_faction !== 'Abstain') return false;
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No vote history records matching the filter.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach((h, idx) => {
+    const tr = document.createElement("tr");
+
+    const oldBadge = h.old_faction 
+      ? `<span class="faction-badge ${h.old_faction.toLowerCase()}">${h.old_faction === 'Horde' ? '🔴' : (h.old_faction === 'Alliance' ? '🔵' : '⚪')} ${h.old_faction}</span>`
+      : `<span style="color:#64748b; font-size:11px;">Unassigned</span>`;
+
+    const newBadge = `<span class="faction-badge ${h.new_faction.toLowerCase()}">${h.new_faction === 'Horde' ? '🔴' : (h.new_faction === 'Alliance' ? '🔵' : (h.new_faction === 'Removed' ? '❌' : '⚪'))} ${h.new_faction}</span>`;
+
+    let sourceHtml = '';
+    if (h.changed_by === 'discord_sync') {
+      sourceHtml = `<span class="source-badge discord">🤖 Discord Poll</span>`;
+    } else if (h.changed_by === 'admin') {
+      sourceHtml = `<span class="source-badge admin">👤 Admin Panel</span>`;
+    } else {
+      sourceHtml = `<span class="source-badge initial">Baseline</span>`;
+    }
+
+    tr.innerHTML = `
+      <td style="color:#64748b; font-size:11px;">${h.id}</td>
+      <td class="time-cell" title="${h.timestamp}">${formatRelativeTime(h.timestamp)}</td>
+      <td class="player-name">${h.player_name}</td>
+      <td>${oldBadge} <span class="swap-arrow">➔</span> ${newBadge}</td>
+      <td>${sourceHtml}</td>
+      <td style="color:#94a3b8; font-size:12px;">${h.details || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function syncDiscord() {
+  const btn = document.getElementById("btn-sync");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Syncing...";
+  }
+  showToast("Fetching live votes from native Discord Poll in #sign-up-forever...");
+  try {
+    const res = await fetch("/api/discord/sync", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`✅ Synced ${data.synced_count} voters from Discord Poll (${data.horde_poll_votes} Horde, ${data.alliance_poll_votes} Alliance)!`);
+      fetchHistory();
+    } else {
+      showToast("❌ Discord poll sync failed.");
+    }
+  } catch (e) {
+    showToast("❌ Network error connecting to sync.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🤖 Sync Discord Poll";
+    }
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 3500);
+}
+
+// Initial fetch and auto-refresh loop
+fetchHistory();
+setInterval(fetchHistory, 4000);
+</script>
+
+</body>
+</html>

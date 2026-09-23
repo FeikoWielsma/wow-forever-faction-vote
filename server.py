@@ -11,6 +11,7 @@ import uvicorn
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DB_PATH", BASE_DIR / "wow_vote.db"))
 HTML_PATH = BASE_DIR / "index.html"
+HISTORY_PATH = BASE_DIR / "history.html"
 STATIC_DIR = BASE_DIR / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
@@ -157,6 +158,18 @@ def init_db():
                 value TEXT NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS vote_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_id INTEGER,
+                player_name TEXT NOT NULL,
+                old_faction TEXT,
+                new_faction TEXT NOT NULL,
+                changed_by TEXT NOT NULL DEFAULT 'admin',
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                details TEXT
+            )
+        """)
 
         # Check if players table is empty, seed if so
         cur = conn.execute("SELECT COUNT(*) as count FROM players")
@@ -224,6 +237,13 @@ def serve_home():
     return HTML_PATH.read_text(encoding="utf-8")
 
 
+@app.get("/history", response_class=HTMLResponse)
+def serve_history():
+    if not HISTORY_PATH.exists():
+        raise HTTPException(status_code=404, detail="history.html not found")
+    return HISTORY_PATH.read_text(encoding="utf-8")
+
+
 @app.get("/api/state")
 def get_state():
     conn = get_db()
@@ -280,6 +300,13 @@ def create_player(player: PlayerCreate):
         )
         new_id = cur.lastrowid
         row = conn.execute("SELECT * FROM players WHERE id = ?", (new_id,)).fetchone()
+        conn.execute(
+            """
+            INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details)
+            VALUES (?, ?, ?, ?, 'admin', 'Added new member to roster')
+            """,
+            (new_id, name, None, player.faction),
+        )
 
     sync_to_gcs()
 
@@ -298,9 +325,18 @@ def create_player(player: PlayerCreate):
 def delete_player(player_id: int):
     conn = get_db()
     with conn:
-        cur = conn.execute("DELETE FROM players WHERE id = ?", (player_id,))
-        if cur.rowcount == 0:
+        row = conn.execute("SELECT * FROM players WHERE id = ?", (player_id,)).fetchone()
+        if not row:
             raise HTTPException(status_code=404, detail="Player not found")
+
+        conn.execute(
+            """
+            INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details)
+            VALUES (?, ?, ?, 'Removed', 'admin', 'Removed member from roster')
+            """,
+            (player_id, row["name"], row["faction"]),
+        )
+        conn.execute("DELETE FROM players WHERE id = ?", (player_id,))
 
     sync_to_gcs()
     return {"status": "deleted", "id": player_id}
@@ -327,6 +363,14 @@ def update_player(player_id: int, update: PlayerUpdate):
         if update.faction is not None:
             if update.faction not in ("Horde", "Alliance", "Abstain"):
                 raise HTTPException(status_code=400, detail="Invalid faction")
+            if update.faction != row["faction"]:
+                conn.execute(
+                    """
+                    INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details)
+                    VALUES (?, ?, ?, ?, 'admin', 'Manual change in Admin panel')
+                    """,
+                    (player_id, row["name"], row["faction"], update.faction),
+                )
             updates.append("faction = ?")
             params.append(update.faction)
 
@@ -395,6 +439,10 @@ DEFAULT_MESSAGE_ID = os.environ.get("DISCORD_MESSAGE_ID", "1548585777326329887")
 
 
 def normalize_name(s: str) -> str:
+    if not s:
+        return ""
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s).encode("ASCII", "ignore").decode("utf-8")
     return s.lower().replace(" ", "").replace("_", "").replace(".", "").replace("/", "").strip()
 
 
@@ -427,9 +475,12 @@ def sync_discord_votes():
             print(f"Discord API error {endpoint}: {e}")
             return None
 
-    # Fetch users who reacted Alliance and Horde
-    ally_users = discord_fetch(f"/channels/{c_id}/messages/{m_id}/reactions/{urllib.parse.quote('Alliance:965755044932763719')}?limit=100") or []
-    horde_users = discord_fetch(f"/channels/{c_id}/messages/{m_id}/reactions/{urllib.parse.quote('Horde:965755045087948830')}?limit=100") or []
+    # Fetch users from Discord Native Poll: Answer 1 = Horde, Answer 2 = Alliance
+    horde_res = discord_fetch(f"/channels/{c_id}/polls/{m_id}/answers/1?limit=100") or {}
+    ally_res = discord_fetch(f"/channels/{c_id}/polls/{m_id}/answers/2?limit=100") or {}
+
+    horde_users = horde_res.get("users", [])
+    ally_users = ally_res.get("users", [])
 
     user_votes = {}
     for u in ally_users:
@@ -481,13 +532,35 @@ def sync_discord_votes():
                     if norm_p == norm_c or norm_p in norm_c or norm_c in norm_p:
                         matched_player = p
                         break
+                    # Special guild aliases
                     if ("xak" in norm_p and "agravain" in norm_c) or ("agravain" in norm_p and "xak" in norm_c):
+                        matched_player = p
+                        break
+                    if ("fartlord" in norm_p and "tom" in norm_c) or ("tom" in norm_p and "fartlord" in norm_c):
+                        matched_player = p
+                        break
+                    if ("purpleman" in norm_p and "marsian" in norm_c) or ("marsian" in norm_p and "purpleman" in norm_c):
+                        matched_player = p
+                        break
+                    if ("brokest" in norm_p and "slavedemorto" in norm_c) or ("slavedemorto" in norm_p and "brokest" in norm_c):
+                        matched_player = p
+                        break
+                    if ("erelja" in norm_p and "erellja" in norm_c) or ("erellja" in norm_p and "erelja" in norm_c):
                         matched_player = p
                         break
                 if matched_player:
                     break
 
             if matched_player:
+                old_f = matched_player["faction"]
+                if vote_faction != old_f:
+                    conn.execute(
+                        """
+                        INSERT INTO vote_history (player_id, player_name, old_faction, new_faction, changed_by, details)
+                        VALUES (?, ?, ?, ?, 'discord_sync', ?)
+                        """,
+                        (matched_player["id"], matched_player["name"], old_f, vote_faction, f"Discord poll vote ({nick or gname or uname})"),
+                    )
                 conn.execute(
                     "UPDATE players SET faction = ? WHERE id = ?",
                     (vote_faction, matched_player["id"]),
@@ -495,8 +568,9 @@ def sync_discord_votes():
                 updated.append({
                     "id": matched_player["id"],
                     "name": matched_player["name"],
-                    "faction": vote_faction,
-                    "discord_nick": nick or uname,
+                    "old_faction": old_f,
+                    "new_faction": vote_faction,
+                    "discord_nick": nick or gname or uname,
                 })
             else:
                 unmatched.append({
@@ -512,9 +586,31 @@ def sync_discord_votes():
         "synced_count": len(updated),
         "updated": updated,
         "unmatched": unmatched,
-        "total_alliance_reactions": len(ally_users),
-        "total_horde_reactions": len(horde_users),
+        "horde_poll_votes": len(horde_users),
+        "alliance_poll_votes": len(ally_users),
     }
+
+
+@app.get("/api/history")
+def get_vote_history(limit: int = 200):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, player_id, player_name, old_faction, new_faction, changed_by, timestamp, details FROM vote_history ORDER BY id DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    return [
+        {
+            "id": r["id"],
+            "player_id": r["player_id"],
+            "player_name": r["player_name"],
+            "old_faction": r["old_faction"],
+            "new_faction": r["new_faction"],
+            "changed_by": r["changed_by"],
+            "timestamp": r["timestamp"],
+            "details": r["details"],
+        }
+        for r in rows
+    ]
 
 
 if __name__ == "__main__":

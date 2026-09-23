@@ -1290,7 +1290,8 @@
       <span class="admin-desc">You are on the management URL. You can edit names, add/remove members, toggle eras, and move factions.</span>
     </div>
     <div class="admin-bar-actions">
-      <button class="btn btn-primary" id="btn-discord-sync" style="font-size: 12px; padding: 6px 12px; background: #5865F2; border-color: #5865F2;" onclick="syncDiscordVotes()" title="Fetch latest votes from Discord message in #sign-up-forever">🤖 Sync Discord Poll</button>
+      <button class="btn btn-primary" id="btn-discord-sync" style="font-size: 12px; padding: 6px 12px; background: #5865F2; border-color: #5865F2;" onclick="syncDiscordVotes()" title="Fetch latest votes from Discord native poll in #sign-up-forever">🤖 Sync Discord Poll</button>
+      <a href="/history" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">📜 Vote History</a>
       <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="copyPublicLink()">📋 Copy Public Safe Link</button>
       <a href="/" target="_blank" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">👁️ Open Safe View</a>
     </div>
@@ -1305,6 +1306,7 @@
       <div class="safe-view-badge safe-only">
         <span>🛡️ Public Live View (Read-Only)</span>
       </div>
+      <a href="/history" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">📜 Vote History</a>
       <div id="db-status-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #065f46;">
         <span id="db-status-dot" style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
         <span id="db-status-text">Connecting to SQLite...</span>
@@ -2869,12 +2871,14 @@ async function syncDiscordVotes() {
     btn.disabled = true;
     btn.textContent = "⏳ Syncing...";
   }
-  showToast("Fetching live votes from Discord message in #sign-up-forever...");
+  showToast("Fetching live votes from Discord poll in #sign-up-forever...");
   try {
     const res = await fetch("/api/discord/sync", { method: "POST" });
     if (res.ok) {
       const data = await res.json();
-      showToast(`✅ Synced ${data.synced_count} Discord voters (${data.total_alliance_reactions} Alliance, ${data.total_horde_reactions} Horde)!`);
+      const allyCount = data.alliance_poll_votes ?? data.total_alliance_reactions ?? 0;
+      const hordeCount = data.horde_poll_votes ?? data.total_horde_reactions ?? 0;
+      showToast(`✅ Synced ${data.synced_count} Discord voters (${allyCount} Alliance, ${hordeCount} Horde)!`);
       const stateRes = await fetch("/api/state");
       if (stateRes.ok) {
         const sdata = await stateRes.json();
