@@ -12,3 +12,5 @@ venv
 *.db-shm
 *.db-journal
 .DS_Store
+.claude
+tools

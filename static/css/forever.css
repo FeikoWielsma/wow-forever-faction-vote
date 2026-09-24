@@ -1,0 +1,151 @@
+/* =========================================================
+   WoW: FOREVER LOOK
+   Painterly sunset hero, cream-to-peach serif headlines, warm
+   earth base, teal ocean section, textured teal buttons.
+   ========================================================= */
+:root {
+  --page: #2e2217;
+  --card: #1b1410;
+  --card-2: #241b15;
+  --cream: #f3eee2;
+  --peach: #e2c2ab;
+  --text: #f3eee2;
+  --muted: rgba(243, 238, 226, 0.68);
+  --dim: rgba(243, 238, 226, 0.42);
+  --edge: rgba(243, 238, 226, 0.14);
+  --frame: rgba(214, 205, 186, 0.55);
+
+  --teal: #0f6064;
+  --teal-hi: #1c8a8c;
+  --teal-glow: #43c1c0;
+  --sea-top: #063149;
+  --sea-bot: #01648c;
+
+  --ally: #2c56b8;
+  --ally-hi: #9fbaff;
+  --ally-deep: #1b3478;
+  --horde: #b0301f;
+  --horde-hi: #ff9b84;
+  --horde-deep: #6f1712;
+  --land: #b89a6a;
+  --neutral-land: #4d3f2c;
+
+  --horde-red: var(--horde-hi);
+  --alliance-blue: var(--ally-hi);
+
+  --display: 'Marcellus', 'Palatino Linotype', Georgia, serif;
+  --body: 'Open Sans', Arial, Helvetica, sans-serif;
+  --headline: linear-gradient(180deg, var(--cream) 0%, var(--peach) 100%);
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --ridge-far: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 140' preserveAspectRatio='none'%3E%3Cpath d='M0 140V78l70-26 60 30 80-58 70 44 90-36 70 48 60-20 90-50 80 52 60-18 70 38 90-60 70 46 80-24 70 40 90-54 70 36 70-12 50 22 50 10v84z' fill='%233a2c4f' fill-opacity='.75'/%3E%3C/svg%3E");
+  --ridge-near: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 110' preserveAspectRatio='none'%3E%3Cpath d='M0 110V74l50-10 40 16 70-34 50 26 30-8 60 30 80-40 50 22 60-12 70 28 40-6 80-42 60 34 50-4 70 26 60-30 50 14 80-36 60 30 70-8 50 18 60-24 50 20 100 6v62z' fill='%232e2217'/%3E%3C/svg%3E");
+
+  /* thin ornamental corner brackets, used as a background layer */
+  --corner: var(--frame);
+  --frame-corners:
+    linear-gradient(var(--corner), var(--corner)) left 6px top 6px / 22px 1px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left 6px top 6px / 1px 22px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right 6px top 6px / 22px 1px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right 6px top 6px / 1px 22px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left 6px bottom 6px / 22px 1px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left 6px bottom 6px / 1px 22px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right 6px bottom 6px / 22px 1px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right 6px bottom 6px / 1px 22px no-repeat;
+  --card-bg: var(--frame-corners), linear-gradient(180deg, var(--card-2), var(--card));
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { overflow-x: clip; }
+body {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--page) var(--grain);
+  padding: 0 16px 60px;
+  min-height: 100vh;
+}
+.container { max-width: 1320px; margin: 0 auto; }
+a { color: inherit; }
+
+/* Full-bleed band: spans the viewport, content stays in the container */
+.full-bleed {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-left: max(24px, calc(50vw - 50%));
+  padding-right: max(24px, calc(50vw - 50%));
+}
+
+/* ---------- Hero ---------- */
+header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  text-align: center;
+  padding-top: 64px;
+  padding-bottom: 96px;
+  background:
+    var(--ridge-near) bottom / 100% 110px no-repeat,
+    var(--ridge-far) bottom 34px center / 100% 140px no-repeat,
+    radial-gradient(ellipse 40% 36% at 50% 72%, rgba(255, 214, 160, 0.55), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 18% 20%, rgba(98, 76, 160, 0.55), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 30%, rgba(210, 120, 140, 0.45), transparent 70%),
+    linear-gradient(180deg, #2c2f63 0%, #5d4d8f 30%, #a0708f 58%, #d99a7c 78%, #e7b27b 100%);
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 58px;
+  line-height: 1.05;
+  background: var(--headline);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+.header-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 15.5px;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  background:
+    radial-gradient(50% 50% at 50% 50%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%),
+    var(--grain), var(--teal);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:hover {
+  background-color: var(--teal-hi);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(67, 193, 192, 0.5);
+}
+.btn-outline {
+  background: rgba(23, 14, 9, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(243, 238, 226, 0.35);
+  backdrop-filter: blur(4px);
+}
+.btn-outline:hover { background: rgba(23, 14, 9, 0.65); }
+.btn-discord { background: #5865f2; }
+.btn-discord:hover { background: #6d78f5; }
+.btn-sm { font-size: 14px; padding: 7px 14px; }
+
+/* ---------- Footer ---------- */
+.fine-print { max-width: 1320px; margin: 48px auto 0; font-size: 12px; text-align: center; color: var(--dim); }
+
+@media (max-width: 640px) {
+  h1 { font-size: 34px; }
+}
