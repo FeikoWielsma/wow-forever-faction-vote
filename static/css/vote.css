@@ -462,6 +462,7 @@ body:not(.is-admin) .admin-only { display: none !important; }
 .controls-row-top, .controls-row-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
 .controls-row-top { padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
 .controls-row-bottom { padding-top: 14px; }
+body:not(.is-admin) .controls-row-bottom { padding-top: 0; }
 .mode-switch-container { display: flex; gap: 20px; }
 .mode-switch-btn {
   padding: 8px 4px 10px;

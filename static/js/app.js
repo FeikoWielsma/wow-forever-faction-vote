@@ -339,19 +339,19 @@ function renderTable() {
       </select>
     `;
 
-    const checkboxC = `<td class="center"><input type="checkbox" ${p.c ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 'c', this.checked)"` : 'disabled'}></td>`;
-    const checkboxS = `<td class="center"><input type="checkbox" ${p.s ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 's', this.checked)"` : 'disabled'}></td>`;
-    const checkboxR = `<td class="center"><input type="checkbox" ${p.r ? 'checked' : ''} ${isAdmin ? `onchange="toggleBox(${p.id}, 'r', this.checked)"` : 'disabled'}></td>`;
-
+    // Era checkboxes (Classic / SoD / Retail) only exist in the admin view
+    const adminEraTds = isAdmin
+      ? ["c", "s", "r"].map(era =>
+          `<td class="center"><input type="checkbox" ${p[era] ? 'checked' : ''} onchange="toggleBox(${p.id}, '${era}', this.checked)"></td>`
+        ).join("")
+      : '';
     const adminMoveTd = isAdmin ? `<td class="center">${factionSelectHtml}</td>` : '';
     const adminDelTd = isAdmin ? `<td class="center"><button class="btn-del" title="Remove player" onclick="removePlayer(${p.id})">✕</button></td>` : '';
 
     tr.innerHTML = `
       <td class="row-num">${idx + 1}</td>
       <td>${nameHtml}</td>
-      ${checkboxC}
-      ${checkboxS}
-      ${checkboxR}
+      ${adminEraTds}
       <td class="center player-score ${p.faction === 'Abstain' ? 'abstaining' : ''}" id="score_${p.id}">0</td>
       ${adminMoveTd}
       ${adminDelTd}
@@ -363,7 +363,7 @@ function renderTable() {
   hordeList.forEach((p, idx) => hTbody.appendChild(buildRow(p, idx)));
   abstainList.forEach((p, idx) => absTbody.appendChild(buildRow(p, idx)));
 
-  const colSpan = isAdmin ? 8 : 6;
+  const colSpan = isAdmin ? 8 : 3;
   if (allianceList.length === 0) {
     aTbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-row">No Alliance voters matching filter</td></tr>`;
   }
