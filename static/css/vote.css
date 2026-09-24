@@ -151,6 +151,17 @@ body:not(.is-admin) .admin-only { display: none !important; }
 .map-panel-title { font-family: var(--display); font-size: 46px; line-height: 1.1; color: var(--cream); }
 .map-panel-sub { font-size: 17px; color: rgba(255, 255, 255, 0.75); }
 .map-panel-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+.map-panel-title-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 18px; }
+
+/* Collapsed map: <html class="map-collapsed">, remembered in localStorage */
+.map-toggle .when-collapsed { display: none; }
+.map-collapsed .map-toggle .when-open { display: none; }
+.map-collapsed .map-toggle .when-collapsed { display: inline; }
+.map-collapsed .map-panel-sub,
+.map-collapsed .map-panel-actions,
+.map-collapsed .election-body { display: none; }
+.map-collapsed .map-panel-header { margin-bottom: 0; }
+.map-collapsed .election-map-panel { padding-top: 52px; padding-bottom: 64px; }
 
 .election-ticker {
   display: inline-flex;

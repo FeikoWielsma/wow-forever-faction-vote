@@ -297,6 +297,25 @@ function selectZone(zoneId) {
   }
 }
 
+// Collapse/expand the electoral map section; the choice is restored on load by
+// the inline script in index.html's <head>, which reads the same key.
+const MAP_COLLAPSED_KEY = "wfv-map-collapsed";
+
+function syncMapToggle() {
+  const collapsed = document.documentElement.classList.contains("map-collapsed");
+  document.getElementById("map-toggle").setAttribute("aria-expanded", String(!collapsed));
+}
+
+function toggleMapPanel() {
+  const collapsed = document.documentElement.classList.toggle("map-collapsed");
+  try {
+    localStorage.setItem(MAP_COLLAPSED_KEY, collapsed ? "1" : "0");
+  } catch (e) {}
+  syncMapToggle();
+}
+
+syncMapToggle();
+
 let isJebMode = false;
 
 function toggleJebMode() {

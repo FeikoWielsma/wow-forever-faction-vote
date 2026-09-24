@@ -12,6 +12,12 @@
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/css/forever.css">
 <link rel="stylesheet" href="/static/css/vote.css">
+<script>
+  // Restore a collapsed electoral map before first paint (toggleMapPanel saves it)
+  try {
+    if (localStorage.getItem("wfv-map-collapsed") === "1") document.documentElement.classList.add("map-collapsed");
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -81,7 +87,12 @@
   <div class="election-map-panel full-bleed">
     <div class="map-panel-header">
       <div>
-        <div class="map-panel-title">Electoral Map</div>
+        <div class="map-panel-title-row">
+          <div class="map-panel-title">Electoral Map</div>
+          <button class="btn btn-outline btn-sm map-toggle" id="map-toggle" type="button" aria-controls="election-body" aria-expanded="true" onclick="toggleMapPanel()">
+            <span class="when-open">Hide map</span><span class="when-collapsed">Show map</span>
+          </button>
+        </div>
         <div class="map-panel-sub">Click a zone to see its voters.</div>
       </div>
       <div class="map-panel-actions">
@@ -93,101 +104,103 @@
       </div>
     </div>
 
-    <!-- 270toWin Segmented Progress Bar -->
-    <div class="electoral-bar-container">
-      <div class="electoral-bar-header">
-        <div class="ev-total alliance">
-          <span class="ev-name">ALLIANCE</span>
-          <span class="ev-num" id="ev-alliance-total">0</span>
-        </div>
-        <div class="ev-target-center">
-          <div class="ev-target-label">To win</div>
-          <div class="ev-target-val" id="ev-target-number">22 EV</div>
-        </div>
-        <div class="ev-total horde">
-          <span class="ev-num" id="ev-horde-total">0</span>
-          <span class="ev-name">HORDE</span>
-        </div>
-      </div>
-
-      <div class="electoral-bar-track">
-        <div class="ev-seg solid-alliance" id="bar-solid-alliance" style="width: 0%" title="Solid Alliance"></div>
-        <div class="ev-seg lean-alliance" id="bar-lean-alliance" style="width: 0%" title="Lean Alliance"></div>
-        <div class="ev-seg tossup" id="bar-tossup" style="width: 100%" title="Tossup / Battlegrounds"></div>
-        <div class="ev-seg lean-horde" id="bar-lean-horde" style="width: 0%" title="Lean Horde"></div>
-        <div class="ev-seg solid-horde" id="bar-solid-horde" style="width: 0%" title="Solid Horde"></div>
-        <div class="ev-threshold-line" style="left: 50%;"></div>
-      </div>
-
-      <div class="electoral-bar-legend">
-        <span class="leg-item"><span class="leg-dot solid-alliance"></span> Solid Alliance</span>
-        <span class="leg-item"><span class="leg-dot lean-alliance"></span> Lean Alliance</span>
-        <span class="leg-item"><span class="leg-dot tossup"></span> Tossup</span>
-        <span class="leg-item"><span class="leg-dot lean-horde"></span> Lean Horde</span>
-        <span class="leg-item"><span class="leg-dot solid-horde"></span> Solid Horde</span>
-        <span class="leg-item"><span class="leg-dot new-zone"></span> New in Forever</span>
-      </div>
-    </div>
-
-    <!-- Dual Map + Magic Wall Grid -->
-    <div class="map-layout-grid">
-      <!-- Interactive Azeroth SVG Map -->
-      <div class="map-svg-wrap">
-        <!-- azeroth-map.svg -->
-
-        <!-- Jeb! Celebrating Map Overlay -->
-        <div id="jeb-map-overlay" class="jeb-celebrate-wrap" style="display: none;">
-          <div class="jeb-banner-overlay">
-            <div class="jeb-banner-title">⚡ FLAWLESS VICTORY ⚡</div>
-            <div class="jeb-banner-sub">43 / 43 DELEGATES • PLEASE CLAP 👏</div>
+    <div class="election-body" id="election-body">
+      <!-- 270toWin Segmented Progress Bar -->
+      <div class="electoral-bar-container">
+        <div class="electoral-bar-header">
+          <div class="ev-total alliance">
+            <span class="ev-name">ALLIANCE</span>
+            <span class="ev-num" id="ev-alliance-total">0</span>
           </div>
-          <img src="/static/jeb_cutout.png" onerror="if(this.src!=='static/jeb_cutout.png') this.src='static/jeb_cutout.png'" alt="Jeb! Celebrating Flawless Victory" class="jeb-cutout-img" onclick="showToast('👏 Please clap! (Mandate confirmed)')" title="Click to applaud">
+          <div class="ev-target-center">
+            <div class="ev-target-label">To win</div>
+            <div class="ev-target-val" id="ev-target-number">22 EV</div>
+          </div>
+          <div class="ev-total horde">
+            <span class="ev-num" id="ev-horde-total">0</span>
+            <span class="ev-name">HORDE</span>
+          </div>
+        </div>
+
+        <div class="electoral-bar-track">
+          <div class="ev-seg solid-alliance" id="bar-solid-alliance" style="width: 0%" title="Solid Alliance"></div>
+          <div class="ev-seg lean-alliance" id="bar-lean-alliance" style="width: 0%" title="Lean Alliance"></div>
+          <div class="ev-seg tossup" id="bar-tossup" style="width: 100%" title="Tossup / Battlegrounds"></div>
+          <div class="ev-seg lean-horde" id="bar-lean-horde" style="width: 0%" title="Lean Horde"></div>
+          <div class="ev-seg solid-horde" id="bar-solid-horde" style="width: 0%" title="Solid Horde"></div>
+          <div class="ev-threshold-line" style="left: 50%;"></div>
+        </div>
+
+        <div class="electoral-bar-legend">
+          <span class="leg-item"><span class="leg-dot solid-alliance"></span> Solid Alliance</span>
+          <span class="leg-item"><span class="leg-dot lean-alliance"></span> Lean Alliance</span>
+          <span class="leg-item"><span class="leg-dot tossup"></span> Tossup</span>
+          <span class="leg-item"><span class="leg-dot lean-horde"></span> Lean Horde</span>
+          <span class="leg-item"><span class="leg-dot solid-horde"></span> Solid Horde</span>
+          <span class="leg-item"><span class="leg-dot new-zone"></span> New in Forever</span>
         </div>
       </div>
 
-      <!-- State Inspector (John King / Magic Wall Desk) -->
-      <div class="state-inspector" id="state-inspector">
-        <div>
-          <div class="inspector-header">
-              <div class="inspector-zone-name" id="insp-name">Hillsbrad Foothills</div>
-              <div class="inspector-zone-sub" id="insp-sub">Eastern Kingdoms • Battleground</div>
+      <!-- Dual Map + Magic Wall Grid -->
+      <div class="map-layout-grid">
+        <!-- Interactive Azeroth SVG Map -->
+        <div class="map-svg-wrap">
+          <!-- azeroth-map.svg -->
 
-          </div>
-
-          <!-- Jeb Celebrating Meme Card (Magic Wall) -->
-          <div id="insp-jeb-media" class="insp-jeb-media" style="display: none;">
-            <img src="/static/jeb_celebrate.jpg" onerror="if(this.src!=='static/jeb_celebrate.jpg') this.src='static/jeb_celebrate.jpg'" alt="Jeb Celebrating Flawless Victory" class="insp-jeb-img" title="Flawless Victory: Please clap">
-          </div>
-
-          <div class="insp-metric-row">
-            <div class="insp-metric">
-              <div class="insp-label">Delegates</div>
-              <div class="insp-val" id="insp-ev">5 EV</div>
+          <!-- Jeb! Celebrating Map Overlay -->
+          <div id="jeb-map-overlay" class="jeb-celebrate-wrap" style="display: none;">
+            <div class="jeb-banner-overlay">
+              <div class="jeb-banner-title">⚡ FLAWLESS VICTORY ⚡</div>
+              <div class="jeb-banner-sub">43 / 43 DELEGATES • PLEASE CLAP 👏</div>
             </div>
-            <div class="insp-metric">
-              <div class="insp-label">Status</div>
-              <div class="insp-val tossup" id="insp-status">TOSSUP</div>
-            </div>
-            <div class="insp-metric">
-              <div class="insp-label">Lead Margin</div>
-              <div class="insp-val" id="insp-margin">EVEN</div>
-            </div>
-          </div>
-          <div class="insp-voters-list">
-            <div class="insp-voters-title">Voters</div>
-            <div class="insp-voters-chips" id="insp-voters-chips"></div>
+            <img src="/static/jeb_cutout.png" onerror="if(this.src!=='static/jeb_cutout.png') this.src='static/jeb_cutout.png'" alt="Jeb! Celebrating Flawless Victory" class="jeb-cutout-img" onclick="showToast('👏 Please clap! (Mandate confirmed)')" title="Click to applaud">
           </div>
         </div>
-        <div class="insp-lore" id="insp-lore">
-          "Tarren Mill vs Southshore. The most legendary Vanilla world PvP warzone. A razor-thin battleground that could decide the faction."
+
+        <!-- State Inspector (John King / Magic Wall Desk) -->
+        <div class="state-inspector" id="state-inspector">
+          <div>
+            <div class="inspector-header">
+                <div class="inspector-zone-name" id="insp-name">Hillsbrad Foothills</div>
+                <div class="inspector-zone-sub" id="insp-sub">Eastern Kingdoms • Battleground</div>
+
+            </div>
+
+            <!-- Jeb Celebrating Meme Card (Magic Wall) -->
+            <div id="insp-jeb-media" class="insp-jeb-media" style="display: none;">
+              <img src="/static/jeb_celebrate.jpg" onerror="if(this.src!=='static/jeb_celebrate.jpg') this.src='static/jeb_celebrate.jpg'" alt="Jeb Celebrating Flawless Victory" class="insp-jeb-img" title="Flawless Victory: Please clap">
+            </div>
+
+            <div class="insp-metric-row">
+              <div class="insp-metric">
+                <div class="insp-label">Delegates</div>
+                <div class="insp-val" id="insp-ev">5 EV</div>
+              </div>
+              <div class="insp-metric">
+                <div class="insp-label">Status</div>
+                <div class="insp-val tossup" id="insp-status">TOSSUP</div>
+              </div>
+              <div class="insp-metric">
+                <div class="insp-label">Lead Margin</div>
+                <div class="insp-val" id="insp-margin">EVEN</div>
+              </div>
+            </div>
+            <div class="insp-voters-list">
+              <div class="insp-voters-title">Voters</div>
+              <div class="insp-voters-chips" id="insp-voters-chips"></div>
+            </div>
+          </div>
+          <div class="insp-lore" id="insp-lore">
+            "Tarren Mill vs Southshore. The most legendary Vanilla world PvP warzone. A razor-thin battleground that could decide the faction."
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Key Battleground Swing States Row -->
-    <div class="battlegrounds-row">
-      <div class="bg-section-title">Battlegrounds</div>
-      <div class="bg-cards-grid" id="bg-cards-grid"></div>
+      <!-- Key Battleground Swing States Row -->
+      <div class="battlegrounds-row">
+        <div class="bg-section-title">Battlegrounds</div>
+        <div class="bg-cards-grid" id="bg-cards-grid"></div>
+      </div>
     </div>
   </div>
 
