@@ -1,0 +1,8 @@
+# Normalise line endings: LF everywhere, whatever core.autocrlf says
+* text=auto eol=lf
+*.bat text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.xlsx binary
