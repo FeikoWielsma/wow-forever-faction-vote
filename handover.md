@@ -55,6 +55,8 @@ The application is in active production use by the guild leadership and communit
 |---|---|---|
 | `DISCORD_BOT_TOKEN` | Bot token used to query the Discord Poll API | Configured in Cloud Run & developer environment (NEVER commit to git) |
 | `GCS_BUCKET` | Google Cloud Storage bucket for DB persistence | `wow-vote-data-207474260976` |
+| `ADMIN_PASSWORD` | Password for `/admin` and all write APIs (HTTP Basic, any username) | Secret Manager `wow-vote-admin-password`, mounted on Cloud Run. Unset = admin refused (503) |
+| `SYNC_TOKEN` | `X-Sync-Token` for scheduled `POST /api/discord/sync` calls | Secret Manager `wow-vote-sync-token` |
 | `PORT` | Web server listening port | `8080` (Cloud Run default) / `8000` (Local) |
 | `DISCORD_CHANNEL_ID` | Guild channel ID for signups | `1548578917965635675` |
 | `DISCORD_MESSAGE_ID` | Message ID of the native poll | `1548585777326329887` |
@@ -94,10 +96,12 @@ gcloud run deploy wow-faction-vote \
   --project=feiko-homepage \
   --region=europe-west4 \
   --source=. \
-  --set-env-vars="GCS_BUCKET=wow-vote-data-207474260976,DISCORD_BOT_TOKEN=<YOUR_BOT_TOKEN>" \
   --allow-unauthenticated \
   --max-instances=1
 ```
+Env vars and secrets (`GCS_BUCKET`, `DISCORD_BOT_TOKEN`, `SYNC_TOKEN`, `ADMIN_PASSWORD`) persist between deploys. Never use `--set-env-vars` for routine deploys: it replaces all of them. Change one with `--update-env-vars` / `--update-secrets`.
+
+Custom domain: `vote.razortek.nl` (Cloud Run domain mapping, CNAME `ghs.googlehosted.com.`).
 
 ---
 

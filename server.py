@@ -1,4 +1,5 @@
 import os
+from contextlib import closing
 import sqlite3
 import hmac
 import json
@@ -8,8 +9,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
@@ -254,14 +256,47 @@ class SettingsUpdate(BaseModel):
     voting_mode: Optional[str] = None
 
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/admin", response_class=HTMLResponse)
-@app.get("/manage", response_class=HTMLResponse)
-def serve_home():
+# Admin pages and every mutating endpoint sit behind HTTP Basic auth. Only the
+# password is checked (any username works); it comes from ADMIN_PASSWORD, which
+# Cloud Run reads from Secret Manager. Without it, admin access is refused.
+ADMIN_REALM = "WoW Forever admin"
+admin_basic = HTTPBasic(auto_error=False, realm=ADMIN_REALM)
+
+
+def is_admin(credentials: Optional[HTTPBasicCredentials]) -> bool:
+    expected = os.environ.get("ADMIN_PASSWORD", "")
+    if not expected or credentials is None:
+        return False
+    return hmac.compare_digest(credentials.password.encode(), expected.encode())
+
+
+def require_admin(credentials: Optional[HTTPBasicCredentials] = Depends(admin_basic)):
+    if not os.environ.get("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=503, detail="ADMIN_PASSWORD is not configured")
+    if not is_admin(credentials):
+        raise HTTPException(
+            status_code=401,
+            detail="Admin password required",
+            headers={"WWW-Authenticate": f'Basic realm="{ADMIN_REALM}"'},
+        )
+
+
+def render_home():
     if not HTML_PATH.exists():
         raise HTTPException(status_code=404, detail="index.html not found")
     html = HTML_PATH.read_text(encoding="utf-8")
     return html.replace(MAP_PLACEHOLDER, MAP_PATH.read_text(encoding="utf-8"), 1)
+
+
+@app.get("/", response_class=HTMLResponse)
+def serve_home():
+    return render_home()
+
+
+@app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+@app.get("/manage", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+def serve_admin():
+    return render_home()
 
 
 @app.get("/history", response_class=HTMLResponse)
@@ -308,7 +343,7 @@ def get_state():
     return {"players": players, "settings": settings_out}
 
 
-@app.post("/api/players")
+@app.post("/api/players", dependencies=[Depends(require_admin)])
 def create_player(player: PlayerCreate):
     name = player.name.strip()
     if not name:
@@ -316,8 +351,7 @@ def create_player(player: PlayerCreate):
     if player.faction not in ("Horde", "Alliance", "Abstain"):
         raise HTTPException(status_code=400, detail="Invalid faction")
 
-    conn = get_db()
-    with conn:
+    with closing(get_db()) as conn, conn:
         cur = conn.execute(
             """
             INSERT INTO players (name, faction, classic, sod, retail, is_sodam)
@@ -354,10 +388,9 @@ def create_player(player: PlayerCreate):
     }
 
 
-@app.delete("/api/players/{player_id}")
+@app.delete("/api/players/{player_id}", dependencies=[Depends(require_admin)])
 def delete_player(player_id: int):
-    conn = get_db()
-    with conn:
+    with closing(get_db()) as conn, conn:
         row = conn.execute("SELECT * FROM players WHERE id = ?", (player_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Player not found")
@@ -375,10 +408,9 @@ def delete_player(player_id: int):
     return {"status": "deleted", "id": player_id}
 
 
-@app.patch("/api/players/{player_id}")
+@app.patch("/api/players/{player_id}", dependencies=[Depends(require_admin)])
 def update_player(player_id: int, update: PlayerUpdate):
-    conn = get_db()
-    with conn:
+    with closing(get_db()) as conn, conn:
         cur = conn.execute("SELECT * FROM players WHERE id = ?", (player_id,))
         row = cur.fetchone()
         if not row:
@@ -439,10 +471,9 @@ def update_player(player_id: int, update: PlayerUpdate):
     }
 
 
-@app.patch("/api/settings")
+@app.patch("/api/settings", dependencies=[Depends(require_admin)])
 def update_settings(update: SettingsUpdate):
-    conn = get_db()
-    with conn:
+    with closing(get_db()) as conn, conn:
         if update.w_classic is not None:
             conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('w_classic', ?)", (str(update.w_classic),))
         if update.w_sod is not None:
@@ -681,13 +712,15 @@ def _sync_discord_votes():
 
 
 @app.post("/api/discord/sync")
-def sync_discord_votes(request: Request):
-    expected = os.environ.get("SYNC_TOKEN", "")
-    supplied = request.headers.get("X-Sync-Token", "")
-    if not expected:
-        raise HTTPException(status_code=503, detail="SYNC_TOKEN is not configured")
-    if not hmac.compare_digest(supplied, expected):
-        raise HTTPException(status_code=401, detail="Invalid sync token")
+def sync_discord_votes(request: Request, credentials: Optional[HTTPBasicCredentials] = Depends(admin_basic)):
+    # Signed-in admins can sync from the UI; the scheduled job uses X-Sync-Token
+    if not is_admin(credentials):
+        expected = os.environ.get("SYNC_TOKEN", "")
+        supplied = request.headers.get("X-Sync-Token", "")
+        if not expected:
+            raise HTTPException(status_code=503, detail="SYNC_TOKEN is not configured")
+        if not hmac.compare_digest(supplied, expected):
+            raise HTTPException(status_code=401, detail="Invalid sync token")
     if not sync_lock.acquire(blocking=False):
         raise HTTPException(status_code=409, detail="Sync already in progress")
     try:

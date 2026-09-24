@@ -162,6 +162,7 @@ Discord users frequently use server nicknames or handles differing from their in
 1. **Strict Secret Management**:
    - **NEVER** commit Discord Bot Tokens, API keys, or service account credentials into Git commits, PRs, or public files.
    - Use the environment variable `DISCORD_BOT_TOKEN`.
+   - `/admin`, `/manage` and all write endpoints require `ADMIN_PASSWORD` (HTTP Basic, from Secret Manager `wow-vote-admin-password`). For local admin testing, set `ADMIN_PASSWORD` in your shell; never write it into a file in the repo.
    - GitHub secret scanning immediately flags and rejects commits containing Discord tokens.
 2. **Never Re-Enable Reset Roster**:
    - The reset button was permanently removed and the endpoint returns `403 Forbidden`. The live roster contains production community state. Do not add reset buttons back.

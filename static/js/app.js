@@ -46,9 +46,10 @@ const DEFAULT_PLAYERS = [
   { id: 42, name: "noxqs", faction: "Alliance", c: false, s: true, r: false }
 ];
 
-const isAdmin = window.location.pathname.startsWith("/admin") || 
-                window.location.pathname.startsWith("/manage") || 
-                new URLSearchParams(window.location.search).has("admin");
+// /admin and /manage are password-protected by the server; the API rejects
+// writes without the same credentials, which the browser resends automatically.
+const isAdmin = window.location.pathname.startsWith("/admin") ||
+                window.location.pathname.startsWith("/manage");
 
 if (isAdmin) {
   document.body.classList.add("is-admin");
@@ -651,16 +652,11 @@ async function syncDiscordVotes() {
   const btn = document.getElementById("btn-discord-sync");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "⏳ Syncing...";
+    btn.textContent = "Syncing…";
   }
   showToast("Fetching live votes from Discord poll in #sign-up-forever...");
   try {
-    const token = window.prompt("Enter the sync token to run a manual Discord sync:");
-    if (!token) return;
-    const res = await fetch("/api/discord/sync", {
-      method: "POST",
-      headers: { "X-Sync-Token": token }
-    });
+    const res = await fetch("/api/discord/sync", { method: "POST" });
     if (res.ok) {
       const data = await res.json();
       const allyCount = data.alliance_poll_votes ?? data.total_alliance_reactions ?? 0;
@@ -682,7 +678,7 @@ async function syncDiscordVotes() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "🤖 Sync Discord Poll";
+      btn.textContent = "Sync Discord";
     }
   }
 }
