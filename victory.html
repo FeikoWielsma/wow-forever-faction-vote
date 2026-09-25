@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Results | WoW Forever Faction Vote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="stylesheet" href="/static/css/forever.css">
+<link rel="stylesheet" href="/static/css/map.css">
+<link rel="stylesheet" href="/static/css/victory.css">
+</head>
+<body>
+
+<div class="container">
+  <header class="full-bleed" id="hero" data-winner="">
+    <div class="hero-eyebrow">The polls have closed</div>
+    <h1 id="hero-title">The Votes Are In</h1>
+    <p class="hero-tagline" id="hero-tagline">Counting the ballots…</p>
+    <div class="header-actions">
+      <a href="/" class="btn btn-outline">Electoral Map</a>
+      <a href="/history" class="btn btn-outline">Vote History</a>
+    </div>
+  </header>
+
+  <!-- FINAL TALLY -->
+  <section class="result-card" aria-label="Final tally">
+    <div class="result-row">
+      <div class="result-side alliance">
+        <div class="result-label">Alliance</div>
+        <div class="result-num" id="res-alliance">–</div>
+        <div class="result-sub" id="res-alliance-sub"></div>
+      </div>
+      <div class="result-mid">
+        <div class="result-label">Final margin</div>
+        <div class="result-margin" id="res-margin">–</div>
+        <div class="result-sub" id="res-margin-sub"></div>
+      </div>
+      <div class="result-side horde">
+        <div class="result-label">Horde</div>
+        <div class="result-num" id="res-horde">–</div>
+        <div class="result-sub" id="res-horde-sub"></div>
+      </div>
+    </div>
+    <div class="result-bar" aria-hidden="true">
+      <div class="result-seg alliance" id="bar-alliance" style="width: 50%"></div>
+      <div class="result-seg horde" id="bar-horde" style="width: 50%"></div>
+      <div class="result-half"></div>
+    </div>
+    <div class="result-foot" id="res-foot"></div>
+  </section>
+
+  <!-- BY THE NUMBERS -->
+  <section class="section">
+    <h2 class="section-title">By the Numbers</h2>
+    <div class="stats-grid" id="stats-grid"></div>
+  </section>
+
+  <!-- THE RACE -->
+  <section class="section">
+    <h2 class="section-title">The Race</h2>
+    <p class="section-sub">The lead after every recorded vote change, from the first switch to the last.</p>
+    <div class="panel chart-panel">
+      <div class="chart-legend">
+        <span class="leg-item"><span class="leg-swatch alliance"></span>Alliance ahead</span>
+        <span class="leg-item"><span class="leg-swatch horde"></span>Horde ahead</span>
+      </div>
+      <div class="chart-wrap" id="race-chart">
+        <div class="empty-state">Loading…</div>
+      </div>
+      <div class="chart-note">Every change is listed in the <a href="/history">vote history</a>.</div>
+    </div>
+  </section>
+
+  <!-- HALL OF FAME -->
+  <section class="section">
+    <h2 class="section-title">Hall of Fame</h2>
+    <div class="awards-grid" id="awards-grid"></div>
+  </section>
+
+  <!-- FINAL MAP -->
+  <section class="section">
+    <h2 class="section-title">The Final Map</h2>
+    <p class="section-sub" id="map-sub"></p>
+    <div class="final-map-grid">
+      <div class="map-svg-wrap">
+        <!-- azeroth-map.svg -->
+      </div>
+      <div class="panel district-panel">
+        <div class="district-head">
+          <div class="ev-total alliance"><span class="ev-num" id="ev-alliance">0</span><span class="ev-name">Alliance EV</span></div>
+          <div class="ev-total horde"><span class="ev-name">Horde EV</span><span class="ev-num" id="ev-horde">0</span></div>
+        </div>
+        <ul class="district-list" id="district-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL ROLL -->
+  <section class="section">
+    <h2 class="section-title">The Final Roll</h2>
+    <div class="roll-grid">
+      <div class="panel roll-col alliance">
+        <div class="roll-head"><span>Alliance</span><span class="roll-count" id="roll-alliance-count"></span></div>
+        <div class="chips" id="roll-alliance"></div>
+      </div>
+      <div class="panel roll-col horde">
+        <div class="roll-head"><span>Horde</span><span class="roll-count" id="roll-horde-count"></span></div>
+        <div class="chips" id="roll-horde"></div>
+      </div>
+    </div>
+    <div class="panel roll-col abstain" id="roll-abstain-wrap" hidden>
+      <div class="roll-head"><span>Abstained</span><span class="roll-count" id="roll-abstain-count"></span></div>
+      <div class="chips" id="roll-abstain"></div>
+    </div>
+  </section>
+
+  <!-- election-map.js reads era weights from these inputs in era-weighted mode -->
+  <input type="hidden" id="w-classic" value="1">
+  <input type="hidden" id="w-sod" value="1">
+  <input type="hidden" id="w-retail" value="1">
+</div>
+
+<footer class="fine-print" aria-label="Terms of Service">
+  By viewing this site, you automatically agree that Thistlewind should receive the first Legendary. This clause is legally binding in at least one tavern.
+</footer>
+
+<script src="/static/js/election-map.js"></script>
+<script src="/static/js/victory.js"></script>
+
+</body>
+</html>

@@ -34,15 +34,19 @@ The guild faced a split vote between Horde (🔴) and Alliance (🔵). This appl
 ├── server.py             # FastAPI backend, SQLite connection, Discord API sync, REST endpoints
 ├── index.html            # Main page markup: public view, admin panel, Azeroth election map
 ├── history.html          # Vote history / defection audit page markup
+├── victory.html          # Final results page: winner, stats, race chart, awards, final map
 ├── partials/
-│   └── azeroth-map.svg   # Generated electoral map, inlined into index.html by server.py
+│   └── azeroth-map.svg   # Generated electoral map, inlined into index.html and victory.html by server.py
 ├── static/
 │   ├── css/forever.css   # Shared WoW: Forever look (tokens, hero, buttons, footer)
+│   ├── css/map.css       # Electoral map SVG styles (shared by index.html and victory.html)
 │   ├── css/vote.css      # Main page styles
 │   ├── css/history.css   # History page styles
+│   ├── css/victory.css   # Final results page styles
 │   ├── js/app.js         # Roster state, API sync, scoreboard, admin actions (calls init())
 │   ├── js/election-map.js # District data, electoral maths, map/inspector rendering, Jeb! mode
 │   ├── js/history.js     # History page logic
+│   ├── js/victory.js     # Final results: stats and race chart rebuilt from /api/state + /api/history
 │   ├── favicon.svg / favicon.ico / apple-touch-icon.png
 │   └── jeb_*.png|jpg     # Jeb! easter egg images
 ├── tools/generate_map.py # Dev-only generator for the electoral map SVG (needs shapely via uv --with)
@@ -146,6 +150,7 @@ Discord users frequently use server nicknames or handles differing from their in
 | `GET` | `/` | Main public application (Map + Simulator) | Public |
 | `GET` | `/admin` | Main application with admin controls enabled | Admin |
 | `GET` | `/history` | Dedicated Vote History and defection tracker | Public |
+| `GET` | `/victory` | Final results: winner, stats, lead-over-time chart, awards, final map | Public |
 | `GET` | `/api/state` | Returns roster (`players`), weights, and voting mode | Public |
 | `PATCH` | `/api/players/{id}` | Updates faction, era checkboxes, or name | Admin |
 | `POST` | `/api/players` | Adds a new player to the roster | Admin |

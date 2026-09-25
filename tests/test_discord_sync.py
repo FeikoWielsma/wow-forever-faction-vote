@@ -121,8 +121,13 @@ class AdminAuthTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_public_pages_stay_open(self):
-        for path in ("/", "/history", "/api/state", "/api/history"):
+        for path in ("/", "/history", "/victory", "/api/state", "/api/history"):
             self.assertEqual(self.client.get(path).status_code, 200, path)
+
+    def test_victory_page_inlines_map(self):
+        html = self.client.get("/victory").text
+        self.assertIn('id="azeroth-svg"', html)
+        self.assertNotIn(self.server.MAP_PLACEHOLDER, html)
 
     def test_admin_page_requires_password(self):
         response = self.client.get("/admin")

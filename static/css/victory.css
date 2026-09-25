@@ -1,0 +1,291 @@
+/* Final results page (victory.html). Shared look lives in forever.css,
+   the electoral map SVG styles in map.css. */
+
+.container { max-width: 1200px; }
+
+/* ---------- Hero ---------- */
+header {
+  min-height: 400px;
+  padding-top: 150px;
+  padding-bottom: 104px;
+  gap: 14px;
+}
+/* Medallion: bronze ring, gem in the winner's colour */
+header::before {
+  content: 'VICTORY';
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--display);
+  font-size: 12.5px;
+  letter-spacing: 1.5px;
+  color: var(--cream);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at 45% 38%, #5fd2d0 0%, #1a7d86 40%, #0b3b4a 78%);
+  border: 5px solid #9a7349;
+  box-shadow:
+    0 0 0 2px #3a2614, 0 0 0 5px #c9a878, 0 0 0 7px #3a2614,
+    0 10px 30px rgba(20, 10, 40, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.55);
+}
+header[data-winner="Horde"]::before { background: radial-gradient(circle at 45% 38%, #ff9b84 0%, #b0301f 42%, #4a0e0a 80%); }
+header[data-winner="Alliance"]::before { background: radial-gradient(circle at 45% 38%, #9fbaff 0%, #2c56b8 42%, #0f1f4a 80%); }
+header[data-winner="Tie"]::before { content: 'TIED'; }
+.hero-eyebrow {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cream);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+h1 { font-size: 64px; }
+.hero-tagline {
+  max-width: 620px;
+  font-size: 17px;
+  font-style: italic;
+  color: var(--cream);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Shared panels ---------- */
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  box-shadow: var(--card-shadow);
+}
+.section { margin-top: 44px; }
+.section-title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 30px;
+  margin-bottom: 4px;
+  background: var(--headline);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.section-sub { margin-bottom: 16px; font-size: 14px; color: var(--muted); }
+.section-title + .stats-grid, .section-title + .awards-grid { margin-top: 16px; }
+.empty-state { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+/* ---------- Final tally (overlaps the ridge) ---------- */
+.result-card {
+  position: relative;
+  z-index: 2;
+  margin-top: -56px;
+  padding: 26px 30px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--edge);
+  border-top: 3px solid var(--teal-glow);
+  border-radius: 2px;
+  box-shadow: var(--card-shadow);
+}
+body[data-winner="Horde"] .result-card { border-top-color: var(--horde); }
+body[data-winner="Alliance"] .result-card { border-top-color: var(--ally); }
+.result-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 20px; }
+.result-side.horde { text-align: right; }
+.result-mid { text-align: center; }
+.result-label { font-family: var(--display); font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; }
+.result-side.alliance .result-label { color: var(--ally-hi); }
+.result-side.horde .result-label { color: var(--horde-hi); }
+.result-num { font-weight: 300; font-size: 76px; line-height: 1; color: var(--cream); }
+.result-side.winner .result-num { font-weight: 600; }
+.result-side.winner .result-label::after { content: ' ✦ winner'; color: var(--peach); letter-spacing: 1px; font-size: 12px; }
+.result-margin {
+  font-family: var(--display);
+  font-size: 40px;
+  line-height: 1.1;
+  background: var(--headline);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.result-sub { font-size: 13px; color: var(--muted); }
+.result-bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 18px;
+  margin-top: 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 2px;
+}
+.result-seg { height: 100%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.result-seg.alliance { background: var(--ally); border-radius: 2px 0 0 2px; }
+.result-seg.horde { background: var(--horde); border-radius: 0 2px 2px 0; margin-left: auto; }
+.result-half {
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  background: var(--cream);
+  box-shadow: 0 0 8px rgba(243, 238, 226, 0.7);
+}
+.result-foot { margin-top: 12px; font-size: 13px; text-align: center; color: var(--muted); }
+
+/* ---------- Stat cards ---------- */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.stat-card {
+  padding: 18px 18px 16px;
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--edge);
+  border-top: 3px solid var(--land);
+  border-radius: 2px;
+  box-shadow: var(--card-shadow);
+}
+.stat-card.horde { border-top-color: var(--horde); }
+.stat-card.alliance { border-top-color: var(--ally); }
+.stat-card.teal { border-top-color: var(--teal-glow); }
+.stat-label { font-family: var(--display); font-size: 13.5px; letter-spacing: 1px; text-transform: uppercase; }
+.stat-num {
+  font-weight: 300;
+  font-size: 44px;
+  line-height: 1.15;
+  background: var(--headline);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.stat-sub { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- Race chart ---------- */
+.chart-panel { padding: 18px 20px 14px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 8px; font-size: 12.5px; color: var(--muted); }
+.leg-item { display: inline-flex; align-items: center; gap: 6px; }
+.leg-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.leg-swatch.alliance { background: var(--ally); }
+.leg-swatch.horde { background: var(--horde); }
+.chart-wrap { position: relative; min-height: 200px; }
+.chart-wrap svg { display: block; width: 100%; overflow: visible; }
+.chart-wrap svg:focus { outline: none; }
+.chart-wrap svg:focus-visible { outline: 2px solid var(--teal-glow); outline-offset: 4px; }
+.race-grid { stroke: rgba(243, 238, 226, 0.08); stroke-width: 1; }
+.race-zero { stroke: rgba(243, 238, 226, 0.45); stroke-width: 1; }
+.race-area.alliance { fill: var(--ally); fill-opacity: 0.55; }
+.race-area.horde { fill: var(--horde); fill-opacity: 0.55; }
+.race-line { fill: none; stroke: var(--cream); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.race-axis { font-size: 11px; fill: var(--dim); }
+.race-end { font-size: 12px; font-weight: 700; fill: var(--cream); }
+.race-cross { stroke: rgba(243, 238, 226, 0.6); stroke-width: 1; }
+.race-dot { fill: var(--cream); stroke: var(--card); stroke-width: 2; }
+.race-tip {
+  position: absolute;
+  z-index: 5;
+  min-width: 180px;
+  max-width: 260px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  background: rgba(20, 14, 10, 0.96);
+  border: 1px solid var(--frame);
+  border-radius: 2px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.race-tip strong { display: block; font-size: 15px; color: var(--cream); }
+.race-tip .tip-player { color: var(--cream); font-weight: 600; }
+.chart-note { margin-top: 8px; font-size: 12.5px; color: var(--dim); }
+.chart-note a { color: var(--muted); }
+
+/* ---------- Awards ---------- */
+.awards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.award {
+  position: relative;
+  padding: 20px 22px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  box-shadow: var(--card-shadow);
+}
+.award-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--peach); }
+.award-name {
+  margin: 4px 0 6px;
+  font-family: var(--display);
+  font-size: 26px;
+  line-height: 1.15;
+  color: var(--cream);
+  overflow-wrap: anywhere;
+}
+.award-desc { font-size: 13.5px; color: var(--muted); }
+.award-icon { position: absolute; top: 16px; right: 18px; font-size: 22px; opacity: 0.85; }
+
+/* ---------- Final map ---------- */
+.final-map-grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; }
+.map-zone { cursor: default; }
+.zone-tossup { animation: none; }
+.district-panel { padding: 18px 18px 10px; }
+.district-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px solid var(--edge); }
+.ev-total { display: flex; align-items: baseline; gap: 6px; }
+.ev-num { font-weight: 300; font-size: 40px; line-height: 1; color: var(--cream); }
+.ev-name { font-family: var(--display); font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.ev-total.alliance .ev-name { color: var(--ally-hi); }
+.ev-total.horde .ev-name { color: var(--horde-hi); }
+.district-list { list-style: none; }
+.district-list li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 2px;
+  font-size: 13.5px;
+  border-bottom: 1px solid rgba(243, 238, 226, 0.06);
+}
+.district-list li:last-child { border-bottom: 0; }
+.district-key { width: 12px; height: 12px; border-radius: 2px; background: var(--land); }
+.district-key.zone-solid-alliance { background: var(--ally-deep); }
+.district-key.zone-lean-alliance { background: #4d74d4; }
+.district-key.zone-lean-horde { background: #c84a36; }
+.district-key.zone-solid-horde { background: var(--horde-deep); }
+.district-name { color: var(--cream); }
+.district-name small { color: var(--dim); margin-left: 4px; }
+.district-margin { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+
+/* ---------- Final roll ---------- */
+.roll-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.roll-col { padding: 16px 18px 18px; border-top: 3px solid var(--land); }
+.roll-col.alliance { border-top-color: var(--ally); }
+.roll-col.horde { border-top-color: var(--horde); }
+.roll-col.abstain { margin-top: 18px; }
+.roll-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; font-family: var(--display); font-size: 20px; }
+.roll-count { font-family: var(--body); font-size: 13px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.roll-col.alliance .chip { background: rgba(44, 86, 184, 0.24); color: #dde6ff; border-color: rgba(159, 186, 255, 0.3); }
+.roll-col.horde .chip { background: rgba(176, 48, 31, 0.24); color: #ffe1d9; border-color: rgba(255, 155, 132, 0.3); }
+.roll-col.abstain .chip { color: var(--peach); }
+.chip.switched::after { content: ' ⇄'; opacity: 0.7; }
+.roll-note { margin-top: 10px; font-size: 12px; color: var(--dim); }
+
+@media (max-width: 900px) {
+  .final-map-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  h1 { font-size: 38px; }
+  header { min-height: 0; padding-top: 150px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px 10px 12px; }
+  .stat-label { font-size: 12px; }
+  .stat-num { font-size: 34px; }
+  .result-card { padding: 20px 16px 16px; }
+  .result-row { grid-template-columns: 1fr 1fr; }
+  .result-mid { grid-column: 1 / -1; order: -1; }
+  .result-num { font-size: 56px; }
+  .roll-grid { grid-template-columns: 1fr; }
+}

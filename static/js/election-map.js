@@ -303,7 +303,8 @@ const MAP_COLLAPSED_KEY = "wfv-map-collapsed";
 
 function syncMapToggle() {
   const collapsed = document.documentElement.classList.contains("map-collapsed");
-  document.getElementById("map-toggle").setAttribute("aria-expanded", String(!collapsed));
+  const toggle = document.getElementById("map-toggle");
+  if (toggle) toggle.setAttribute("aria-expanded", String(!collapsed));
 }
 
 function toggleMapPanel() {
